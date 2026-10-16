@@ -64,7 +64,10 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$$;
+$;
+
+-- This function is called by the auth trigger, not by client-side RPC.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
