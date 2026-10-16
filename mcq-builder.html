@@ -50,13 +50,15 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">الكل</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
 <div class="field"><label for="filter-difficulty">الصعوبة</label><select id="filter-difficulty"><option value="">الكل</option><option>سهل</option><option>متوسط</option><option>صعب</option></select></div>
 </div>
-<div class="actions" style="margin:0 0 15px"><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><input class="hidden" id="import-file" type="file" accept=".json,application/json"><button class="btn danger" id="clear-all" type="button">مسح الكل</button></div>
+<div class="actions" style="margin:0 0 15px"><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><input class="hidden" id="import-file" type="file" accept=".json,application/json" aria-describedby="import-help"><button class="btn danger" id="clear-all" type="button">مسح الكل</button></div>
+<p id="import-help" class="muted">يقبل الاستيراد ملفات حتى 2 ميغابايت وبحد أقصى 2000 سؤال؛ تُرفض البيانات التي لا تطابق صيغة نبراس.</p>
 <div id="questions" class="q-list"><div class="empty">لم تضف أسئلة بعد. ابدأ بإضافة أول سؤال من النموذج.</div></div>
 <p id="bank-status" class="status" role="status" aria-live="polite"></p>
 </section>
 </div>
 </main>
 <footer>نِبراس — أداة إنشاء الأسئلة اليدوية · الإصدار الأولي</footer>
+<script src="assets/mcq-import.js"></script>
 <script>
 (function(){
 const KEY='nibras-mcq-questions-v1';
@@ -65,8 +67,7 @@ const list=document.getElementById('questions');
 const status=document.getElementById('form-status');
 const bankStatus=document.getElementById('bank-status');
 let questions=[];
-try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))questions=saved.filter(validQuestion)}catch(e){questions=[]}
-function validQuestion(q){return q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string')&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&typeof q.category==='string'&&typeof q.difficulty==='string'}
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))questions=saved.filter(window.NibrasMcqImport.validQuestion)}catch(e){questions=[]}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(questions));return true}catch(e){bankStatus.textContent='تعذّر الحفظ. قد تكون مساحة تخزين المتصفح ممتلئة.';return false}}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
 function render(){
@@ -102,7 +103,7 @@ document.getElementById('export-csv').addEventListener('click',()=>{const rows=[
 document.getElementById('clear-all').addEventListener('click',()=>{if(confirm('تحذير: سيتم حذف جميع أسئلة هذا المتصفح. هل تريد المتابعة؟')){questions=[];save();render();bankStatus.textContent='تم مسح بنك الأسئلة.'}});
 const importFile=document.getElementById('import-file');
 document.getElementById('import-button').addEventListener('click',()=>importFile.click());
-importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||!data.every(validQuestion)){throw new Error('invalid')}const seen=new Set(questions.map(q=>q.id));const incoming=data.filter(q=>!seen.has(q.id));questions=[...incoming,...questions];save();render();bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.'}catch(e){bankStatus.textContent='تعذّر الاستيراد: الملف غير صالح أو لا يطابق صيغة نبراس.'}finally{importFile.value=''}});
+importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;if(file.size>window.NibrasMcqImport.MAX_IMPORT_BYTES){bankStatus.textContent='حجم الملف أكبر من 2 ميغابايت. اختر ملفًا أصغر.';importFile.value='';return}const previousQuestions=questions;try{const data=window.NibrasMcqImport.parseImportText(await file.text());const incoming=window.NibrasMcqImport.filterNewQuestions(data,questions);questions=[...incoming,...questions];if(!save()){questions=previousQuestions;render();return}render();bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.'}catch(e){bankStatus.textContent='تعذّر الاستيراد: الملف غير صالح أو يتجاوز الحدود المسموحة.'}finally{importFile.value=''}});
 render();
 })();
 </script>
