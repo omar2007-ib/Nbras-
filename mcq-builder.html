@@ -57,6 +57,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 </div>
 </main>
 <footer>نِبراس — أداة إنشاء الأسئلة اليدوية · الإصدار الأولي</footer>
+<script src="assets/mcq-data.js"></script>
 <script>
 (function(){
 const KEY='nibras-mcq-questions-v1';
@@ -64,9 +65,12 @@ const form=document.getElementById('question-form');
 const list=document.getElementById('questions');
 const status=document.getElementById('form-status');
 const bankStatus=document.getElementById('bank-status');
+const mcqData=window.NibrasMcqData;
+if(!mcqData){bankStatus.textContent='تعذر تحميل أدوات التحقق. أعد تحميل الصفحة.';return}
+const {MAX_IMPORT_BYTES,MAX_QUESTIONS,isValidQuestion,isImportFileAllowed,mergeImportedQuestions,normalizeQuestion}=mcqData;
+const validQuestion=isValidQuestion;
 let questions=[];
-try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))questions=saved.filter(validQuestion)}catch(e){questions=[]}
-function validQuestion(q){return q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string')&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&typeof q.category==='string'&&typeof q.difficulty==='string'}
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))questions=saved.filter(validQuestion).slice(0,MAX_QUESTIONS).map(normalizeQuestion)}catch(e){questions=[]}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(questions));return true}catch(e){bankStatus.textContent='تعذّر الحفظ. قد تكون مساحة تخزين المتصفح ممتلئة.';return false}}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
 function render(){
@@ -90,9 +94,11 @@ e.preventDefault();
 const question=document.getElementById('question').value.trim();
 const options=[0,1,2,3].map(i=>document.getElementById('option'+i).value.trim());
 if(!question||options.some(x=>!x)){status.textContent='أكمل نص السؤال والخيارات الأربعة.';return}
+if(questions.length>=MAX_QUESTIONS){status.textContent='وصل بنك الأسئلة إلى الحد الأقصى (1000 سؤال). صدّر نسخة احتياطية قبل حذف أسئلة.';return}
 const q={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9),question,options,correct:Number(document.getElementById('correct').value),category:document.getElementById('category').value,difficulty:document.getElementById('difficulty').value,explanation:document.getElementById('explanation').value.trim(),createdAt:new Date().toISOString()};
-questions.unshift(q);
-if(save()){render();form.reset();status.textContent='تم حفظ السؤال بنجاح.';document.getElementById('question').focus()}
+const previousQuestions=questions;
+questions=[q,...questions];
+if(save()){render();form.reset();status.textContent='تم حفظ السؤال بنجاح.';bankStatus.textContent='';document.getElementById('question').focus()}else{questions=previousQuestions;render()}
 });
 ['search','filter-category','filter-difficulty'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',render));
 function download(name,type,data){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -102,7 +108,25 @@ document.getElementById('export-csv').addEventListener('click',()=>{const rows=[
 document.getElementById('clear-all').addEventListener('click',()=>{if(confirm('تحذير: سيتم حذف جميع أسئلة هذا المتصفح. هل تريد المتابعة؟')){questions=[];save();render();bankStatus.textContent='تم مسح بنك الأسئلة.'}});
 const importFile=document.getElementById('import-file');
 document.getElementById('import-button').addEventListener('click',()=>importFile.click());
-importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||!data.every(validQuestion)){throw new Error('invalid')}const seen=new Set(questions.map(q=>q.id));const incoming=data.filter(q=>!seen.has(q.id));questions=[...incoming,...questions];save();render();bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.'}catch(e){bankStatus.textContent='تعذّر الاستيراد: الملف غير صالح أو لا يطابق صيغة نبراس.'}finally{importFile.value=''}});
+importFile.addEventListener('change',async()=>{
+const file=importFile.files&&importFile.files[0];
+if(!file)return;
+try{
+if(!isImportFileAllowed(file)){bankStatus.textContent='اختر ملف JSON لا يتجاوز حجمه '+Math.round(MAX_IMPORT_BYTES/(1024*1024))+' ميجابايت.';return}
+const data=JSON.parse(await file.text());
+const {incoming,merged}=mergeImportedQuestions(questions,data);
+if(!incoming.length){bankStatus.textContent='لا توجد أسئلة جديدة للاستيراد؛ تم تجاهل المعرّفات المكررة.';return}
+const previousQuestions=questions;
+questions=merged;
+if(!save()){questions=previousQuestions;render();return}
+render();
+bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.';
+}catch(error){
+const validationError=error instanceof TypeError||error instanceof RangeError;
+const message=validationError?error.message:'الملف غير صالح أو لا يطابق صيغة نبراس.';
+bankStatus.textContent='تعذّر الاستيراد: '+message;
+}finally{importFile.value=''}
+});
 render();
 })();
 </script>
