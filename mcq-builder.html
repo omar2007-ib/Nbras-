@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101b35">
+<meta name="description" content="إنشاء أسئلة اختيار من متعدد في منصة نبراس">
+<title>صانع أسئلة MCQ | نِبراس</title>
+<style>
+:root{--navy:#101b35;--navy2:#19294a;--gold:#e8bd67;--cream:#f7f5ef;--ink:#17233c;--muted:#68738a;--line:#e6e3da;--green:#1d7655;--red:#a73535}
+*{box-sizing:border-box}body{margin:0;background:var(--cream);color:var(--ink);font-family:Tahoma,Arial,sans-serif;line-height:1.8}header{background:var(--navy);color:#fff;padding:16px 6%;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}header a{color:#fff;text-decoration:none}.logo{font-size:1.55rem;font-weight:900;color:var(--gold)}nav{display:flex;gap:16px;flex-wrap:wrap;font-size:.94rem}.wrap{max-width:1100px;margin:auto;padding:34px 5% 65px}.intro{background:linear-gradient(130deg,var(--navy),var(--navy2));color:white;border-radius:22px;padding:28px;margin-bottom:22px}.intro h1{margin:0 0 6px;font-size:clamp(1.8rem,4vw,2.5rem)}.intro p{margin:0;color:#d9dfeb}.layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 28px #17233c08}.panel h2{font-size:1.2rem;margin:0 0 15px}.field{margin-bottom:14px}.field label{display:block;font-weight:bold;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;padding:11px 12px;border:1px solid #cfd4df;border-radius:10px;font:inherit;background:#fff;color:var(--ink)}.field textarea{min-height:80px;resize:vertical}.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{font:inherit;font-weight:bold;border:0;border-radius:10px;padding:10px 15px;cursor:pointer;background:var(--gold);color:var(--navy)}.btn.dark{background:var(--navy);color:#fff}.btn.light{background:#f0eee7;color:var(--ink)}.btn.danger{background:#fbe8e8;color:var(--red)}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.muted{color:var(--muted);font-size:.9rem}.status{min-height:25px;margin:8px 0;color:var(--green);font-weight:bold}.q-list{display:grid;gap:12px}.q-card{border:1px solid var(--line);border-radius:14px;padding:15px;background:#fff}.q-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.q-top h3{font-size:1rem;margin:0 0 8px;white-space:pre-wrap}.tag{background:#f7efd9;color:#78591f;padding:2px 9px;border-radius:20px;font-size:.78rem;white-space:nowrap}.option{padding:6px 9px;border-radius:8px;background:#f7f7f5;margin:5px 0}.option.correct{background:#e4f4eb;color:#175c40;border:1px solid #b9e2cc}.empty{color:var(--muted);padding:20px;text-align:center;border:1px dashed #c8c8c2;border-radius:12px}.stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.stat{background:#f5f1e6;border-radius:10px;padding:7px 12px;font-size:.9rem}.hidden{display:none!important}footer{text-align:center;color:var(--muted);padding:22px}@media(max-width:780px){.layout{grid-template-columns:1fr}.wrap{padding-top:22px}.choices{grid-template-columns:1fr}header{padding:14px 5%}nav{gap:11px}}
+</style>
+</head>
+<body>
+<header><a class="logo" href="index.html">نِبراس</a><nav aria-label="القائمة الرئيسية"><a href="index.html">الرئيسية</a><a href="courses.html">الدورات</a><a href="practice.html">التدريب</a><a href="study-plan.html">خطة المذاكرة</a></nav></header>
+<main class="wrap">
+<section class="intro"><h1>صانع أسئلة الاختيار من متعدد</h1><p>أنشئ أسئلتك بنفسك، حدّد الإجابة الصحيحة، ثم راجع بنك الأسئلة وصدّره لحفظ نسخة احتياطية.</p></section>
+<div class="layout">
+<section class="panel">
+<h2>➕ إضافة سؤال جديد</h2>
+<form id="question-form">
+<div class="field"><label for="question">نص السؤال</label><textarea id="question" required maxlength="1500" placeholder="اكتب السؤال هنا..."></textarea></div>
+<div class="choices">
+<div class="field"><label for="option0">الخيار أ</label><input id="option0" required maxlength="500" placeholder="الخيار الأول"></div>
+<div class="field"><label for="option1">الخيار ب</label><input id="option1" required maxlength="500" placeholder="الخيار الثاني"></div>
+<div class="field"><label for="option2">الخيار ج</label><input id="option2" required maxlength="500" placeholder="الخيار الثالث"></div>
+<div class="field"><label for="option3">الخيار د</label><input id="option3" required maxlength="500" placeholder="الخيار الرابع"></div>
+</div>
+<div class="field"><label for="correct">الإجابة الصحيحة</label><select id="correct"><option value="0">أ — الخيار الأول</option><option value="1">ب — الخيار الثاني</option><option value="2">ج — الخيار الثالث</option><option value="3">د — الخيار الرابع</option></select></div>
+<div class="choices">
+<div class="field"><label for="category">التصنيف</label><select id="category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<div class="field"><label for="difficulty">مستوى الصعوبة</label><select id="difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option></select></div>
+</div>
+<div class="field"><label for="explanation">شرح الإجابة (اختياري)</label><textarea id="explanation" maxlength="1500" placeholder="اكتب طريقة الحل أو سبب صحة الإجابة..."></textarea></div>
+<div class="actions"><button class="btn" type="submit">حفظ السؤال</button><button class="btn light" type="reset">تفريغ الحقول</button></div>
+<p id="form-status" class="status" role="status" aria-live="polite"></p>
+</form>
+<p class="muted">تنبيه: تُحفظ الأسئلة محليًا في هذا المتصفح على هذا الجهاز، ولا تظهر تلقائيًا للمدرس أو لطلاب آخرين.</p>
+</section>
+<section class="panel">
+<h2>📚 بنك الأسئلة</h2>
+<div class="stats"><span class="stat">عدد الأسئلة: <strong id="count">0</strong></span><span class="stat">تخزين محلي</span></div>
+<div class="field"><label for="search">البحث في الأسئلة</label><input id="search" type="search" placeholder="ابحث بكلمة من السؤال..."></div>
+<div class="choices">
+<div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">الكل</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<div class="field"><label for="filter-difficulty">الصعوبة</label><select id="filter-difficulty"><option value="">الكل</option><option>سهل</option><option>متوسط</option><option>صعب</option></select></div>
+</div>
+<div class="actions" style="margin:0 0 15px"><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><input class="hidden" id="import-file" type="file" accept=".json,application/json"><button class="btn danger" id="clear-all" type="button">مسح الكل</button></div>
+<div id="questions" class="q-list"><div class="empty">لم تضف أسئلة بعد. ابدأ بإضافة أول سؤال من النموذج.</div></div>
+<p id="bank-status" class="status" role="status" aria-live="polite"></p>
+</section>
+</div>
+</main>
+<footer>نِبراس — أداة إنشاء الأسئلة اليدوية · الإصدار الأولي</footer>
+<script>
+(function(){
+const KEY='nibras-mcq-questions-v1';
+const form=document.getElementById('question-form');
+const list=document.getElementById('questions');
+const status=document.getElementById('form-status');
+const bankStatus=document.getElementById('bank-status');
+let questions=[];
+try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))questions=saved.filter(validQuestion)}catch(e){questions=[]}
+function validQuestion(q){return q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string')&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&typeof q.category==='string'&&typeof q.difficulty==='string'}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(questions));return true}catch(e){bankStatus.textContent='تعذّر الحفظ. قد تكون مساحة تخزين المتصفح ممتلئة.';return false}}
+function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+function render(){
+const term=document.getElementById('search').value.trim().toLowerCase();
+const cat=document.getElementById('filter-category').value;
+const diff=document.getElementById('filter-difficulty').value;
+const filtered=questions.filter(q=>(!term||(q.question+' '+q.options.join(' ')+' '+q.explanation).toLowerCase().includes(term))&&(!cat||q.category===cat)&&(!diff||q.difficulty===diff));
+document.getElementById('count').textContent=String(questions.length);list.replaceChildren();
+if(!filtered.length){list.append(el('div','empty',questions.length?'لا توجد أسئلة مطابقة للبحث والتصفية.':'لم تضف أسئلة بعد. ابدأ بإضافة أول سؤال من النموذج.'));return}
+filtered.forEach(q=>{
+const card=el('article','q-card'),top=el('div','q-top'),title=el('h3','',q.question),tag=el('span','tag',q.category+' · '+q.difficulty);
+top.append(title,tag);card.append(top);
+q.options.forEach((opt,i)=>card.append(el('div','option'+(i===q.correct?' correct':''),String.fromCharCode(0x623+i)+' — '+opt+(i===q.correct?' ✓':'')));
+if(q.explanation){const exp=el('p','muted','الشرح: '+q.explanation);card.append(exp)}
+const actions=el('div','actions'),del=el('button','btn danger','حذف');del.type='button';del.addEventListener('click',()=>{if(confirm('هل تريد حذف هذا السؤال؟')){questions=questions.filter(x=>x.id!==q.id);save();render();bankStatus.textContent='تم حذف السؤال.'}});
+actions.append(del);card.append(actions);list.append(card)
+})
+}
+form.addEventListener('submit',e=>{
+e.preventDefault();
+const question=document.getElementById('question').value.trim();
+const options=[0,1,2,3].map(i=>document.getElementById('option'+i).value.trim());
+if(!question||options.some(x=>!x)){status.textContent='أكمل نص السؤال والخيارات الأربعة.';return}
+const q={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9),question,options,correct:Number(document.getElementById('correct').value),category:document.getElementById('category').value,difficulty:document.getElementById('difficulty').value,explanation:document.getElementById('explanation').value.trim(),createdAt:new Date().toISOString()};
+questions.unshift(q);
+if(save()){render();form.reset();status.textContent='تم حفظ السؤال بنجاح.';document.getElementById('question').focus()}
+});
+['search','filter-category','filter-difficulty'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',render));
+function download(name,type,data){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+document.getElementById('export-json').addEventListener('click',()=>{download('nibras-mcq-questions.json','application/json;charset=utf-8',JSON.stringify(questions,null,2));bankStatus.textContent='تم تجهيز ملف JSON للتنزيل.'});
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+document.getElementById('export-csv').addEventListener('click',()=>{const rows=[['السؤال','الخيار أ','الخيار ب','الخيار ج','الخيار د','رقم الإجابة الصحيحة (0-3)','التصنيف','الصعوبة','الشرح'],...questions.map(q=>[q.question,...q.options,q.correct,q.category,q.difficulty,q.explanation])];download('nibras-mcq-questions.csv','text/csv;charset=utf-8','\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'));bankStatus.textContent='تم تجهيز ملف CSV للتنزيل.'});
+document.getElementById('clear-all').addEventListener('click',()=>{if(confirm('تحذير: سيتم حذف جميع أسئلة هذا المتصفح. هل تريد المتابعة؟')){questions=[];save();render();bankStatus.textContent='تم مسح بنك الأسئلة.'}});
+const importFile=document.getElementById('import-file');
+document.getElementById('import-button').addEventListener('click',()=>importFile.click());
+importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||!data.every(validQuestion)){throw new Error('invalid')}const seen=new Set(questions.map(q=>q.id));const incoming=data.filter(q=>!seen.has(q.id));questions=[...incoming,...questions];save();render();bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.'}catch(e){bankStatus.textContent='تعذّر الاستيراد: الملف غير صالح أو لا يطابق صيغة نبراس.'}finally{importFile.value=''}});
+render();
+})();
+</script>
+</body>
+</html>
