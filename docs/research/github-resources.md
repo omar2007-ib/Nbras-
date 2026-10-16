@@ -56,7 +56,9 @@ This catalog records the 25 external GitHub repositories supplied for the Nibras
 |---|---|
 | Resource links recorded | Complete |
 | License and maintenance review for all 25 external repositories | Not yet completed |
-| Project-local agent instructions/skills drafted | Complete (repository-local) |\n| Skills installed into an external agent environment | Not yet completed |
+| Project-local agent instructions/skills drafted | Complete (repository-local) |
+| Skills installed into an external agent environment | Not yet completed |
 | Code copied or merged from external projects | Not done |
-| Static local-link/RTL/metadata checks added | Complete (execution pending) |\n| Browser E2E suite for Nibras | Not yet completed |
+| Static local-link/RTL/metadata checks added | Complete (execution pending) |
+| Browser E2E suite for Nibras | Not yet completed |
 | Free LLM provider selected and connected | Not yet completed |
