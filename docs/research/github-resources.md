@@ -39,7 +39,7 @@ This catalog records the 25 external GitHub repositories supplied for the Nibras
 
 ## D. Free model/API resources
 
-25. [cheahjs/free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) — Reference list of free LLM API resources. Availability, limits, terms, privacy, and key requirements can change; verify with each provider before use.
+25. [cheahjs/free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) — Reference list of free LLM API resources. The GitHub connector could not retrieve its README during this pass, so verify repository availability before relying on it. Availability, limits, terms, privacy, and key requirements can change; verify each provider before use.
 
 ## Proposed adoption order for Nibras
 
