@@ -17,7 +17,15 @@
 - `about.html` — عن المنصة
 - `admin.html` — لوحة إدارة محتوى أولية (معاينة فقط)
 - `auth.html` — واجهة دخول بالبريد (تحتاج ربط Supabase)
-- `AGENTS.md` — تعليمات تطوير آمنة للوكلاء البرمجيين\n- `.agents/skills/nibras-frontend/SKILL.md` — إرشادات الواجهة ونظام التصميم\n- `.agents/skills/nibras-qa/SKILL.md` — إرشادات الاختبار والجودة\n- `.agents/skills/nibras-security/SKILL.md` — إرشادات مراجعة الأمان\n- `docs/implementation/engineering-hardening.md` — تقرير التحسينات وما بقي قبل الإطلاق\n- `scripts/check_site.py` — فحص ساكن للروابط المحلية وRTL والبيانات الوصفية\n- `.github/workflows/site-checks.yml` — تشغيل الفحص عند push وpull request\n- `supabase/storage-policies.sql` — إعداد مخزن خاص وسياسات الوصول لملفات الدورات\n- `supabase/schema.sql` — مخطط قاعدة البيانات وسياسات RLS
+- `AGENTS.md` — تعليمات تطوير آمنة للوكلاء البرمجيين
+- `.agents/skills/nibras-frontend/SKILL.md` — إرشادات الواجهة ونظام التصميم
+- `.agents/skills/nibras-qa/SKILL.md` — إرشادات الاختبار والجودة
+- `.agents/skills/nibras-security/SKILL.md` — إرشادات مراجعة الأمان
+- `docs/implementation/engineering-hardening.md` — تقرير التحسينات وما بقي قبل الإطلاق
+- `scripts/check_site.py` — فحص ساكن للروابط المحلية وRTL والبيانات الوصفية
+- `.github/workflows/site-checks.yml` — تشغيل الفحص عند push وpull request
+- `supabase/storage-policies.sql` — إعداد مخزن خاص وسياسات الوصول لملفات الدورات
+- `supabase/schema.sql` — مخطط قاعدة البيانات وسياسات RLS
 - `supabase/README.md` — خطوات إعداد قاعدة البيانات
 - `assets/supabase-config.js` و`assets/auth.js` — تهيئة عامة وواجهة الدخول
 - `assets/style.css` — التنسيقات المشتركة
