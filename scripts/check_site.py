@@ -117,6 +117,26 @@ for page, parser in parsed.items():
             if fragment not in parsed[target.resolve()].ids:
                 errors.append(f"{rel}: missing fragment target in {raw}")
 
+# Focused feature-presence checks for the manual MCQ builder.
+mcq_path = ROOT / "mcq-builder.html"
+if not mcq_path.exists():
+    errors.append("Missing mcq-builder.html.")
+else:
+    mcq = mcq_path.read_text(encoding="utf-8")
+    required_mcq_features = {
+        "question form": 'id="question-form"',
+        "fourth option": 'id="option3"',
+        "correct-answer selector": 'id="correct"',
+        "JSON export": 'id="export-json"',
+        "CSV export": 'id="export-csv"',
+        "JSON import": 'id="import-file"',
+        "clear-all confirmation action": 'id="clear-all"',
+        "browser-local persistence": "localStorage",
+    }
+    for label, token in required_mcq_features.items():
+        if token not in mcq:
+            errors.append(f"MCQ builder missing {label}.")
+
 print(f"Nibras static site check: {len(pages)} HTML pages scanned.")
 for item in warnings:
     print("WARNING:", item)
