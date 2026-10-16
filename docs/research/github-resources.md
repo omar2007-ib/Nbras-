@@ -1,6 +1,6 @@
 # Nibras Engineering & Learning Resource Catalog
 
-This catalog records the 27 GitHub repositories supplied for the Nibras project. It is a curated reference list for later evaluation and selective adoption.
+This catalog records the 25 external GitHub repositories supplied for the Nibras project. The user's own Nibras and agent-skill repositories are not counted in these 25. This is a curated reference list for later evaluation and selective adoption.
 
 > **Important:** Listing a repository here does not mean its code or skills have been installed, merged, tested, or approved for production. Review each repository's README, license, dependencies, maintenance status, security implications, and compatibility before adopting it. Do not copy code wholesale or add untrusted agent instructions without review.
 
@@ -41,11 +41,6 @@ This catalog records the 27 GitHub repositories supplied for the Nibras project.
 
 25. [cheahjs/free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) — Reference list of free LLM API resources. Availability, limits, terms, privacy, and key requirements can change; verify with each provider before use.
 
-## E. Nibras project repositories
-
-26. [omar2007-ib/Nbras-](https://github.com/omar2007-ib/Nbras-) — The Nibras Qudrat-preparation platform.
-27. [omar2007-ib/Pro-ai-agent-skill-](https://github.com/omar2007-ib/Pro-ai-agent-skill-) — User's agent-skill project/reference.
-
 ## Proposed adoption order for Nibras
 
 1. **QA baseline:** review the QA and website automation repositories; select a small, compatible set of checks for navigation, RTL layout, forms, MCQ creation/scoring, and responsive breakpoints.
@@ -60,7 +55,7 @@ This catalog records the 27 GitHub repositories supplied for the Nibras project.
 | Area | Status |
 |---|---|
 | Resource links recorded | Complete |
-| License and maintenance review for all 27 repositories | Not yet completed |
+| License and maintenance review for all 25 external repositories | Not yet completed |
 | Skills installed into an agent environment | Not yet completed |
 | Code copied or merged from external projects | Not done |
 | Automated QA suite for Nibras | Not yet completed |
