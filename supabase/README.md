@@ -20,3 +20,12 @@
 
 ## تنبيه
 لا تضع بيانات حقيقية أو ترفع ملفات حساسة قبل إكمال إعداد Storage واختبارات RLS. هذه الملفات لا تنشئ المشروع ولا تنشّطه تلقائياً.
+
+
+## Private course file storage
+1. After restoring/activating the Supabase project, review `schema.sql` and run it in SQL Editor.
+2. Then review and run `storage-policies.sql` to create the private `nibras-content` bucket and policies.
+3. The bucket allows PDF, JPEG/PNG/WebP, MP4 and WebM files up to 50 MiB. Update this allowlist only after reviewing the actual upload workflow.
+4. Student read access is limited to files whose `storage_path` exactly matches a published `course_content` row. Owner/admin roles alone can upload, replace or delete files.
+5. This SQL has been committed as a preparation only; it has **not** been applied to the inactive project or tested against a live database.
+6. Never expose a service-role or secret key in client-side files. Set only the project URL and publishable key in `assets/supabase-config.js`.
