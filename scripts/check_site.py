@@ -71,7 +71,7 @@ def rel_path(page, raw):
         return None, "PATH_ESCAPES_ROOT"
     return target, fragment or None
 
-pages = sorted(ROOT.rglob("*.html"))
+pages = sorted(p for p in ROOT.rglob("*.html") if not any(part in {".git", "node_modules", ".next", "dist", "build"} for part in p.relative_to(ROOT).parts))
 if not pages:
     errors.append("No HTML pages found.")
 
