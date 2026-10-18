@@ -1,3 +1,5 @@
+# scripts/check_site.py
+
 #!/usr/bin/env python3
 """Dependency-free static checks for the Athar HTML site."""
 from html.parser import HTMLParser
@@ -64,7 +66,15 @@ def rel_path(page, raw):
     path_part = path_part.split("?", 1)[0]
     if not path_part:
         return page, fragment or None
-    target = (page.parent / path_part).resolve()
+    # Root-relative URLs are served from the site root. In this repository,
+    # static-site assets under public/ are also exposed at that root.
+    if path_part.startswith("/"):
+        site_path = path_part.lstrip("/")
+        target = (ROOT / site_path).resolve()
+        if not target.exists() and (ROOT / "public" / site_path).exists():
+            target = (ROOT / "public" / site_path).resolve()
+    else:
+        target = (page.parent / path_part).resolve()
     try:
         target.relative_to(ROOT.resolve())
     except ValueError:
