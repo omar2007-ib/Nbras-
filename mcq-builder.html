@@ -50,7 +50,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">الكل</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
 <div class="field"><label for="filter-difficulty">الصعوبة</label><select id="filter-difficulty"><option value="">الكل</option><option>سهل</option><option>متوسط</option><option>صعب</option></select></div>
 </div>
-<div class="actions" style="margin:0 0 15px"><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><input class="hidden" id="import-file" type="file" accept=".json,application/json"><button class="btn danger" id="clear-all" type="button">مسح الكل</button></div>
+<div class="actions" style="margin:0 0 15px"><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><label class="sr-only" for="import-file">اختر ملف أسئلة JSON للاستيراد</label><input class="hidden" id="import-file" aria-label="اختر ملف أسئلة JSON للاستيراد" type="file" accept=".json,application/json"><button class="btn danger" id="clear-all" type="button">مسح الكل</button></div>
 <div id="questions" class="q-list"><div class="empty">لم تضف أسئلة بعد. ابدأ بإضافة أول سؤال من النموذج.</div></div>
 <p id="bank-status" class="status" role="status" aria-live="polite"></p>
 </section>
