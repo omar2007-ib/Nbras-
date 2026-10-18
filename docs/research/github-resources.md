@@ -1,6 +1,6 @@
-# Nibras Engineering & Learning Resource Catalog
+# Athar Engineering & Learning Resource Catalog
 
-This catalog records the 25 external GitHub repositories supplied for the Nibras project. The user's own Nibras and agent-skill repositories are not counted in these 25. This is a curated reference list for later evaluation and selective adoption.
+This catalog records the 25 external GitHub repositories supplied for the Athar project. The user's own Athar and agent-skill repositories are not counted in these 25. This is a curated reference list for later evaluation and selective adoption.
 
 > **Important:** Listing a repository here does not mean its code or skills have been installed, merged, tested, or approved for production. Review each repository's README, license, dependencies, maintenance status, security implications, and compatibility before adopting it. Do not copy code wholesale or add untrusted agent instructions without review.
 
@@ -41,11 +41,11 @@ This catalog records the 25 external GitHub repositories supplied for the Nibras
 
 25. [cheahjs/free-llm-api-resources](https://github.com/cheahjs/free-llm-api-resources) — Reference list of free LLM API resources. The GitHub connector could not retrieve its README during this pass, so verify repository availability before relying on it. Availability, limits, terms, privacy, and key requirements can change; verify each provider before use.
 
-## Proposed adoption order for Nibras
+## Proposed adoption order for Athar
 
 1. **QA baseline:** review the QA and website automation repositories; select a small, compatible set of checks for navigation, RTL layout, forms, MCQ creation/scoring, and responsive breakpoints.
 2. **Security review:** inspect the security harness and code-review analyzer; adapt checks only after understanding permissions, dependencies, and safe execution.
-3. **Design/frontend skills:** evaluate frontend and design skills against Nibras's existing Arabic RTL design system before changing UI code.
+3. **Design/frontend skills:** evaluate frontend and design skills against Athar's existing Arabic RTL design system before changing UI code.
 4. **Learning-platform research:** inspect education projects for reusable ideas and architectural patterns; do not assume their licenses permit copying.
 5. **AI integration:** compare free model providers for Arabic quality, rate limits, data handling, and uptime. Keep all secret API keys on a server-side environment; never commit them to browser JavaScript or Git.
 6. **Controlled implementation:** integrate one capability at a time, run tests, review diffs, and document what is actually active.
@@ -60,5 +60,5 @@ This catalog records the 25 external GitHub repositories supplied for the Nibras
 | Skills installed into an external agent environment | Not yet completed |
 | Code copied or merged from external projects | Not done |
 | Static local-link/RTL/metadata checks added | Complete (execution pending) |
-| Browser E2E suite for Nibras | Not yet completed |
+| Browser E2E suite for Athar | Not yet completed |
 | Free LLM provider selected and connected | Not yet completed |

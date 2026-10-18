@@ -3,7 +3,7 @@
   const message = document.querySelector("#auth-message");
   if (!form || !message) return;
 
-  const config = window.NEBRAS_SUPABASE_CONFIG || {};
+  const config = window.ATHAR_SUPABASE_CONFIG || {};
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const email = document.querySelector("#email").value.trim();

@@ -1,8 +1,8 @@
 ---
-name: nibras-security
-description: Review Nibras authentication, authorization, database policies, file uploads, dependencies, and secret handling before release.
+name: athar-security
+description: Review Athar authentication, authorization, database policies, file uploads, dependencies, and secret handling before release.
 ---
-# Nibras Security Skill
+# Athar Security Skill
 
 - Treat all user input and imported JSON as untrusted; validate type, length, shape and size.
 - Never expose Supabase service-role or secret API keys in HTML, browser JS, public repository files, or client-side environment variables.

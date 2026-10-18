@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free static checks for the Nibras HTML site."""
+"""Dependency-free static checks for the Athar HTML site."""
 from html.parser import HTMLParser
 from pathlib import Path
 import sys
@@ -137,7 +137,7 @@ else:
         if token not in mcq:
             errors.append(f"MCQ builder missing {label}.")
 
-print(f"Nibras static site check: {len(pages)} HTML pages scanned.")
+print(f"Athar static site check: {len(pages)} HTML pages scanned.")
 for item in warnings:
     print("WARNING:", item)
 for item in errors:

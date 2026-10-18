@@ -1,4 +1,4 @@
-# نبراس — تقرير تحسينات التطوير والجودة
+# أثَر — تقرير تحسينات التطوير والجودة
 
 تاريخ التقرير: 2026-10-16
 
@@ -6,9 +6,9 @@
 
 - إضافة `AGENTS.md` لتحديد قواعد التطوير الآمن للوكيل البرمجي.
 - إضافة مهارات محلية للمشروع:
-  - `.agents/skills/nibras-frontend/SKILL.md`
-  - `.agents/skills/nibras-qa/SKILL.md`
-  - `.agents/skills/nibras-security/SKILL.md`
+  - `.agents/skills/athar-frontend/SKILL.md`
+  - `.agents/skills/athar-qa/SKILL.md`
+  - `.agents/skills/athar-security/SKILL.md`
 - إضافة `scripts/check_site.py` لفحص روابط الملفات المحلية، واللغة العربية/RTL، وبيانات viewport والعناوين، وبعض خصائص الوصول.
 - إضافة `.github/workflows/site-checks.yml` لتشغيل الفحوصات عند push وpull request.
 - إضافة `supabase/storage-policies.sql` لتجهيز مخزن خاص لملفات الدورات مع صلاحيات القراءة للمواد المنشورة والرفع/التعديل/الحذف للمالك والمدير فقط.

@@ -1,8 +1,8 @@
-# تعليمات وكلاء التطوير — نبراس
+# تعليمات وكلاء التطوير — أثَر
 
 ## المنتج
 - منصة عربية للتحضير لاختبار القدرات؛ كل الصفحات العربية تستخدم `lang="ar"` و`dir="rtl"`.
-- حافظ على هوية التصميم الموثقة في `design-system/nibras/MASTER.md`.
+- حافظ على هوية التصميم الموثقة في `design-system/athar/MASTER.md`.
 - دورات المنصة: «تأسيس — تأسيس من حديد» و«تدريبات — الخطوة الأخيرة».
 
 ## قواعد العمل
@@ -16,6 +16,6 @@
 8. قبل إنهاء المهمة: شغّل `python scripts/check_site.py`، واذكر بدقة ما اختُبر وما لم يُختبر.
 
 ## المهارات المحلية
-- `.agents/skills/nibras-frontend/SKILL.md`: تنفيذ الواجهة ونظام التصميم.
-- `.agents/skills/nibras-qa/SKILL.md`: اختبارات الجودة.
-- `.agents/skills/nibras-security/SKILL.md`: مراجعة الأمان.
+- `.agents/skills/athar-frontend/SKILL.md`: تنفيذ الواجهة ونظام التصميم.
+- `.agents/skills/athar-qa/SKILL.md`: اختبارات الجودة.
+- `.agents/skills/athar-security/SKILL.md`: مراجعة الأمان.

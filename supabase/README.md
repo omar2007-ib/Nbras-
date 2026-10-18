@@ -1,4 +1,4 @@
-# إعداد Supabase لمنصة نبراس
+# إعداد Supabase لمنصة أثَر
 
 هذه ملفات إعداد وتجهيز، وليست دليلاً على أن قاعدة البيانات متصلة بالموقع بالفعل.
 
@@ -24,7 +24,7 @@
 
 ## Private course file storage
 1. After restoring/activating the Supabase project, review `schema.sql` and run it in SQL Editor.
-2. Then review and run `storage-policies.sql` to create the private `nibras-content` bucket and policies.
+2. Then review and run `storage-policies.sql` to create the private `athar-content` bucket and policies.
 3. The bucket allows PDF, JPEG/PNG/WebP, MP4 and WebM files up to 50 MiB. Update this allowlist only after reviewing the actual upload workflow.
 4. Student read access is limited to files whose `storage_path` exactly matches a published `course_content` row. Owner/admin roles alone can upload, replace or delete files.
 5. This SQL has been committed as a preparation only; it has **not** been applied to the inactive project or tested against a live database.

@@ -1,8 +1,8 @@
 ---
-name: nibras-qa
-description: Validate Nibras static pages, navigation, Arabic RTL semantics, MCQ authoring behavior, and release readiness.
+name: athar-qa
+description: Validate Athar static pages, navigation, Arabic RTL semantics, MCQ authoring behavior, and release readiness.
 ---
-# Nibras QA Skill
+# Athar QA Skill
 
 ## Every change
 - Run `python scripts/check_site.py`.

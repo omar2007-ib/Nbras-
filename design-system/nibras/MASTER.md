@@ -1,4 +1,4 @@
-# نبراس — Master Design System
+# أثَر — Master Design System
 
 ## Product context
 Arabic-first RTL learning platform for Saudi Qudrat preparation. Priorities: clarity, trust, focused study, readable questions, and low-friction practice on iPad/mobile and desktop.
