@@ -1,0 +1,39 @@
+/* Athar Design System — October 2026
+   Shared light-mode identity for every public page. */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Tajawal:wght@400;500;600;700;800&display=swap');
+:root{
+ --athar-navy:#16324F;--athar-teal:#0F766E;--athar-amber:#E6A23C;
+ --athar-offwhite:#F7FAFC;--athar-pale:#E7F0EE;--athar-slate:#263746;--athar-white:#FFFFFF;
+ --navy:var(--athar-navy);--navy2:var(--athar-pale);--gold:var(--athar-amber);
+ --cream:var(--athar-offwhite);--ink:var(--athar-slate);--muted:#526575;--sage:var(--athar-pale);
+ color-scheme:light;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif!important;background:var(--athar-offwhite)!important;color:var(--athar-slate)!important}
+h1,h2,h3,h4,h5,h6,.logo,.section-head h2{font-family:'Cairo','Tajawal',sans-serif!important;color:var(--athar-navy)}
+header{background:rgba(255,255,255,.97)!important;color:var(--athar-slate)!important;border-bottom:1px solid #DCE6EB;box-shadow:0 5px 24px rgba(22,50,79,.07)!important}
+header a,.logo,nav a{color:var(--athar-navy)!important}
+nav a:hover,header a:hover{color:var(--athar-teal)!important}
+.hero{background:radial-gradient(ellipse at 12% 18%,rgba(15,118,110,.11),transparent 42%),linear-gradient(135deg,#FFFFFF 0%,var(--athar-offwhite) 65%,var(--athar-pale) 100%)!important;color:var(--athar-slate)!important}
+.hero h1 span,.slogan,footer strong{color:var(--athar-teal)!important}
+.hero p{color:#526575!important}
+.badge{background:#E7F0EE!important;border:1px solid #B8D3CF!important;color:var(--athar-teal)!important}
+.btn,button.btn,input[type=submit],button[type=submit]{background:var(--athar-teal)!important;color:#fff!important;border:1px solid var(--athar-teal)!important;border-radius:12px!important;font-family:'Tajawal',sans-serif!important;font-weight:700!important;box-shadow:0 5px 14px rgba(15,118,110,.13)}
+.btn:hover,button.btn:hover,input[type=submit]:hover{background:var(--athar-navy)!important;border-color:var(--athar-navy)!important;transform:translateY(-1px)}
+.btn.secondary{background:#fff!important;color:var(--athar-navy)!important;border:1px solid #CBD8E0!important}
+section{scroll-margin-top:24px}
+.card,.feature,.faq details,article,.panel,.course-card,.resource-card,.stat-card,.dashboard-card,.auth-card,.form-card{
+ background:var(--athar-white)!important;color:var(--athar-slate)!important;border-color:#DCE6EB!important;border-radius:18px!important;box-shadow:0 10px 28px rgba(22,50,79,.055)!important
+}
+.card h3,.feature strong,.faq summary{color:var(--athar-navy)!important}
+.card p,.feature p,.section-head p,.faq details p{color:#526575!important}
+.num,.icon-badge,.badge-number{background:var(--athar-pale)!important;color:var(--athar-teal)!important}
+.features,.highlight,.soft-panel{background:var(--athar-pale)!important}
+a{color:var(--athar-teal)}
+input,select,textarea{font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif!important;border-color:#CBD8E0!important;border-radius:10px}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(15,118,110,.2)!important;border-color:var(--athar-teal)!important}
+footer{background:var(--athar-navy)!important;color:#fff!important}
+footer strong{color:#F3C36D!important}
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid var(--athar-amber)!important;outline-offset:3px}
+@media(max-width:700px){header{padding-inline:5%!important}nav{gap:12px!important}nav a{font-size:.9rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
