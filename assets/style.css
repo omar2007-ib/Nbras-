@@ -13,3 +13,55 @@ input,select,textarea{min-height:44px}
 .question-legend{display:block;max-width:100%;padding:0;margin:8px 0 12px;font-size:1.1rem;font-weight:700;line-height:1.6;color:var(--ink)}
 .question label{display:inline-flex;align-items:center;gap:8px;min-height:44px;max-width:100%;cursor:pointer}
 .question input[type=radio]{width:18px;height:18px;min-height:0;flex:0 0 auto;accent-color:#6E5508}
+
+
+/* ATHAR VISUAL SYSTEM — unified light educational experience */
+:root{
+ --navy:#16324F;--navy2:#234A68;--gold:#E6A23C;--cream:#F7FAFC;
+ --ink:#182230;--muted:#607080;--line:#DCE5EC;--white:#FFFFFF;
+ --sage:#D9F0E8;--teal:#0F766E;--teal-dark:#115E59;--surface:#FFFFFF;
+ --shadow:0 14px 38px rgba(22,50,79,.08);--radius:20px;
+}
+html{scroll-behavior:smooth}
+body{background:#F5F8FB;color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;line-height:1.85}
+header{position:relative;z-index:5;background:rgba(255,255,255,.96);border-bottom:1px solid #E5ECF2;box-shadow:0 5px 24px rgba(22,50,79,.055);padding:13px max(5%,calc((100% - 1180px)/2));gap:22px}
+.logo{display:inline-flex;align-items:center;gap:10px;color:var(--navy)!important;font-size:1.55rem;font-weight:900;letter-spacing:0;text-decoration:none;white-space:nowrap}
+header .logo:not(:has(img))::before{content:"";display:inline-block;width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#16324F url("athar-mark.svg") center/cover no-repeat;box-shadow:0 5px 12px rgba(22,50,79,.12)}
+header .logo:has(img)::before{display:none}
+header .logo img{width:42px;height:42px;border-radius:13px;object-fit:cover}
+nav{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+nav a{color:#405367;text-decoration:none;font-size:.94rem;font-weight:600;padding:7px 10px;border-radius:10px;transition:background .18s ease,color .18s ease}
+nav a:hover,nav a.active{color:var(--teal-dark);background:#E7F5F1}
+.hero{position:relative;overflow:hidden;background:radial-gradient(ellipse at 8% 15%,rgba(15,118,110,.10),transparent 40%),radial-gradient(ellipse at 92% 85%,rgba(230,162,60,.12),transparent 36%),linear-gradient(135deg,#FFFFFF 0%,#F0F7F8 100%);color:var(--ink);border-bottom:1px solid #E1EAF0;padding:62px 0 70px}
+.hero:before{content:"";position:absolute;inset:auto auto -110px -70px;width:270px;height:270px;border:1px solid rgba(15,118,110,.15);border-radius:50%;box-shadow:0 0 0 28px rgba(15,118,110,.035),0 0 0 58px rgba(230,162,60,.035);pointer-events:none}
+.hero h1,h1{color:var(--navy);letter-spacing:-.025em;line-height:1.35}
+.hero h1{font-size:clamp(2rem,4.3vw,3.45rem);max-width:850px;margin:14px 0}
+.hero p{color:#526577;max-width:760px}
+.hero .wrap{position:relative;z-index:1}
+.badge,.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #CDE5E0;background:#F0FAF7;color:#115E59;border-radius:999px;padding:5px 13px;font-size:.87rem;font-weight:700}
+.btn,.button-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;background:var(--teal);color:white!important;font-weight:800;text-decoration:none;border:1px solid var(--teal);border-radius:12px;padding:11px 19px;box-shadow:0 6px 14px rgba(15,118,110,.13);transition:transform .18s ease,background .18s ease,box-shadow .18s ease;cursor:pointer;font:inherit}
+.btn:hover,.button-primary:hover{background:var(--teal-dark);box-shadow:0 9px 20px rgba(15,118,110,.18);transform:translateY(-1px)}
+.btn.alt,.btn.secondary,.button-secondary{background:#fff;color:var(--navy)!important;border-color:#D5E0E8;box-shadow:none}
+.section{padding-top:48px;padding-bottom:58px}
+.section-title h2,.section-head h2,h2{color:var(--navy);line-height:1.4}
+.grid{gap:20px}
+.card,.panel,.feature,.auth-card,.faq details,.question,.callout,.intro{background:#fff;border:1px solid #E0E8EF;border-radius:var(--radius);box-shadow:var(--shadow)}
+.card,.panel,.feature{padding:24px}
+.card h2,.card h3,.panel h2,.panel h3{color:var(--navy)}
+.card p,.muted,.feature p{color:var(--muted)}
+.card:hover{border-color:#C7DFDB;box-shadow:0 18px 42px rgba(22,50,79,.1)}
+.icon,.num{display:inline-grid;place-items:center;min-width:46px;min-height:46px;border-radius:14px;background:#E7F5F1;color:var(--teal-dark);font-weight:900;border:1px solid #D2EBE4}
+.features{background:linear-gradient(180deg,#EDF7F5,#F5F8FB)}
+.feature{border-radius:16px}
+input,select,textarea{max-width:100%;border:1px solid #CDD9E3;border-radius:12px;background:#fff;color:var(--ink);font:inherit;padding:11px 13px}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(15,118,110,.16);border-color:var(--teal)}
+fieldset{min-width:0;border:1px solid #DCE5EC;border-radius:16px;padding:18px}
+legend,.question-legend{color:var(--navy);font-weight:800}
+.progress{height:10px;background:#E8EEF3;border-radius:999px;overflow:hidden}
+.progress span{display:block;height:100%;background:linear-gradient(90deg,#0F766E,#39A99B);border-radius:999px}
+footer{background:#16324F!important;color:#EAF2F7!important;text-align:center;padding:30px 6%}
+footer strong{color:#F5C46B!important}
+footer a{color:#BCE8DF}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #E6A23C;outline-offset:3px}
+@media(max-width:760px){header{padding:12px 5%;align-items:flex-start}header nav{width:100%;gap:4px 7px}nav a{padding:6px 8px;font-size:.9rem}.hero{padding:45px 0 52px}.wrap{width:90%}.card,.panel,.feature{padding:19px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
