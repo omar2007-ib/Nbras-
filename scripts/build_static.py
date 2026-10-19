@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build only public Athar site files into dist/ for static hosting."""
+"""Build public Athar pages and apply the shared visual identity."""
 from pathlib import Path
 import shutil
 
@@ -15,7 +15,16 @@ OUT.mkdir(parents=True)
 for page in ROOT.glob("*.html"):
     if page.name == "admin.html":
         continue
-    shutil.copy2(page, OUT / page.name)
+    destination = OUT / page.name
+    html = page.read_text(encoding="utf-8")
+    stylesheet = '<link rel="stylesheet" href="assets/athar-design-system.css">'
+    if "athar-design-system.css" not in html:
+        if "</head>" in html:
+            html = html.replace("</head>", f"  {stylesheet}\n</head>", 1)
+        else:
+            # Preserve a valid fallback for any legacy page missing a head close.
+            html = stylesheet + "\n" + html
+    destination.write_text(html, encoding="utf-8")
 
 assets = ROOT / "assets"
 if assets.is_dir():
@@ -30,5 +39,7 @@ robots = ROOT / "robots.txt"
 if robots.exists():
     shutil.copy2(robots, OUT / "robots.txt")
 
-print(f"Built {len(list(OUT.glob('*.html')))} public HTML pages into {OUT.relative_to(ROOT)}/")
+pages = list(OUT.glob("*.html"))
+print(f"Built {len(pages)} public HTML pages into {OUT.relative_to(ROOT)}/")
+print("Applied the shared Athar light-mode stylesheet to every public HTML page.")
 print("Excluded admin.html because the prototype is not protected by server-side authorization.")
