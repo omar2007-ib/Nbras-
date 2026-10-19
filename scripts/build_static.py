@@ -17,10 +17,14 @@ for page in ROOT.glob("*.html"):
         continue
     shutil.copy2(page, OUT / page.name)
 
-for directory in ("assets", "public"):
-    source = ROOT / directory
-    if source.is_dir():
-        shutil.copytree(source, OUT, dirs_exist_ok=True)
+assets = ROOT / "assets"
+if assets.is_dir():
+    shutil.copytree(assets, OUT / "assets", dirs_exist_ok=True)
+
+public = ROOT / "public"
+if public.is_dir():
+    # Public-folder files are served from the site root by Netlify conventions.
+    shutil.copytree(public, OUT, dirs_exist_ok=True)
 
 robots = ROOT / "robots.txt"
 if robots.exists():
