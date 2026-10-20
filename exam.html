@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F7FAFC">
+<meta name="description" content="اختبار تدريبي مؤقت من بنك أسئلة أثَر، مع نتيجة وتصحيح بعد التسليم.">
+<link rel="icon" type="image/svg+xml" href="assets/athar-mark.svg">
+<link rel="stylesheet" href="assets/style.css">
+<title>الاختبار المؤقت | أثَر</title>
+<style>
+.exam-shell{max-width:980px;margin:auto}.exam-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.timer{font-variant-numeric:tabular-nums;font-size:1.35rem;font-weight:800;padding:10px 16px;border-radius:12px;background:#E7F0EE;color:#0F766E}.timer.warning{background:#fff0e0;color:#9a4b08}.progress-track{height:8px;border-radius:99px;background:#e5ebef;overflow:hidden;margin:14px 0 22px}.progress-fill{height:100%;width:0;background:#0F766E;transition:width .2s}.exam-question{padding:20px;border:1px solid #DCE6EB;border-radius:16px;background:#fff;margin-bottom:14px}.exam-question legend{font-weight:800;color:#16324F;padding:0 0 12px}.exam-option{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;margin:6px 0;background:#F7FAFC;cursor:pointer}.exam-option:has(input:checked){background:#E7F0EE;outline:1px solid #0F766E}.exam-option input{margin-top:7px}.exam-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.exam-summary{padding:22px;border-radius:16px;background:#E7F0EE}.exam-summary h2{margin-top:0}.exam-summary li{margin:8px 0}.hidden{display:none!important}.notice{padding:14px 16px;background:#fff8e8;border:1px solid #f1dca7;border-radius:12px}.btn:disabled{opacity:.55;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.progress-fill{transition:none}}
+</style>
+</head>
+<body>
+<header><a class="logo" href="index.html">أثَر</a><nav aria-label="القائمة الرئيسية"><a href="index.html">الرئيسية</a><a href="courses.html">الدورات</a><a href="practice.html">التدريب</a><a href="mcq-builder.html">صانع الأسئلة</a></nav></header>
+<main class="wrap section exam-shell">
+<section class="hero" style="border-radius:20px;padding:26px;margin-bottom:20px"><span class="badge">تدريب بوقت محدد</span><h1>اختبر نفسك بتركيز.</h1><p>اختر مدة الاختبار، ثم أجب عن الأسئلة الموجودة في بنك الأسئلة المحفوظ على هذا المتصفح.</p></section>
+<section id="setup" class="card">
+<h2>إعداد الاختبار</h2>
+<p id="bank-info" class="muted">جارٍ قراءة بنك الأسئلة…</p>
+<div class="field"><label for="duration">مدة الاختبار</label><select id="duration"><option value="15">15 دقيقة</option><option value="30">30 دقيقة</option><option value="60" selected>60 دقيقة</option></select></div>
+<div class="field"><label for="category">نوع الأسئلة</label><select id="category"><option value="">كل التصنيفات</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<p class="notice">ملاحظة: بنك الأسئلة الحالي محلي على هذا الجهاز. لن تظهر أسئلة أنشأها شخص آخر حتى يتم توفير قاعدة بيانات ومزامنة فعلية.</p>
+<div class="exam-actions"><button id="start" class="btn" type="button">ابدأ الاختبار</button><a class="btn secondary" href="mcq-builder.html">إدارة بنك الأسئلة</a></div>
+<p id="setup-status" role="status" aria-live="polite"></p>
+</section>
+<section id="test" class="card hidden" aria-labelledby="test-title">
+<div class="exam-top"><h2 id="test-title">الاختبار</h2><div id="timer" class="timer" role="timer" aria-live="off">60:00</div></div>
+<p id="test-progress" class="muted"></p><div class="progress-track" aria-hidden="true"><div id="progress-fill" class="progress-fill"></div></div>
+<form id="test-form"><div id="question-list"></div><div class="exam-actions"><button class="btn" type="submit">إنهاء وتسليم الاختبار</button><button id="cancel" class="btn secondary" type="button">إلغاء الاختبار</button></div></form>
+<p class="muted">سيتم التسليم تلقائيًا عند انتهاء الوقت.</p>
+</section>
+<section id="results" class="card hidden" aria-live="polite"></section>
+</main>
+<footer><strong>أثَر</strong><br>كل خطوة تعلّم تقرّبك من هدفك.</footer>
+<script>
+(function(){
+'use strict';
+const KEY='athar-mcq-questions-v1';
+const $=id=>document.getElementById(id);
+const setup=$('setup'),test=$('test'),results=$('results'),start=$('start'),list=$('question-list'),form=$('test-form'),timer=$('timer');
+let bank=[],active=[],remaining=0,clock=null,finished=false;
+function valid(q){return q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string')&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&typeof q.category==='string'&&typeof q.difficulty==='string'}
+function load(){try{const raw=JSON.parse(localStorage.getItem(KEY)||'[]');bank=Array.isArray(raw)?raw.filter(valid):[]}catch(e){bank=[]}$('bank-info').textContent='عدد الأسئلة الصالحة في هذا المتصفح: '+bank.length+' سؤال.';start.disabled=bank.length===0}
+function formatTime(n){return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
+function renderTimer(){timer.textContent=formatTime(remaining);timer.classList.toggle('warning',remaining<=300)}
+function renderQuestions(){
+list.replaceChildren();const labels=['أ','ب','ج','د'];
+active.forEach((q,index)=>{
+const field=document.createElement('fieldset');field.className='exam-question';
+const legend=document.createElement('legend');legend.textContent=(index+1)+'. '+q.question;field.append(legend);
+q.options.forEach((option,i)=>{const label=document.createElement('label');label.className='exam-option';const input=document.createElement('input');input.type='radio';input.name='question-'+index;input.value=String(i);input.setAttribute('aria-label','الخيار '+labels[i]);const text=document.createElement('span');text.textContent=labels[i]+' — '+option;label.append(input,text);field.append(label)});
+list.append(field)
+});
+updateProgress()
+}
+function updateProgress(){const answered=active.filter((q,i)=>form.querySelector('input[name="question-'+i+'"]:checked')).length;$('test-progress').textContent='تمت الإجابة عن '+answered+' من '+active.length+' أسئلة.';$('progress-fill').style.width=(active.length?answered/active.length*100:0)+'%'}
+function finish(auto){
+if(finished)return;finished=true;if(clock)clearInterval(clock);clock=null;
+const fields=Array.from(list.querySelectorAll('fieldset'));let score=0,answered=0;
+fields.forEach((field,index)=>{const q=active[index],chosen=form.querySelector('input[name="question-'+index+'"]:checked');if(chosen)answered++;const correct=!!chosen&&Number(chosen.value)===q.correct;if(correct)score++;field.querySelectorAll('input').forEach(input=>input.disabled=true);const feedback=document.createElement('p');feedback.className='muted';feedback.textContent=(correct?'إجابة صحيحة. ':chosen?'إجابة غير صحيحة. ':'لم تتم الإجابة. ')+'الإجابة الصحيحة: '+['أ','ب','ج','د'][q.correct]+' — '+q.options[q.correct]+(q.explanation?' | الشرح: '+q.explanation:'');field.append(feedback)});
+test.classList.add('hidden');results.classList.remove('hidden');results.replaceChildren();
+const heading=document.createElement('h2');heading.textContent=auto?'انتهى الوقت وتم تسليم الاختبار':'تم تسليم الاختبار';
+const scoreLine=document.createElement('p');scoreLine.textContent='نتيجتك: '+score+' من '+active.length+' ('+Math.round(score/active.length*100)+'٪).';
+const details=document.createElement('p');details.textContent='أجبت عن '+answered+' سؤالًا، وتركت '+(active.length-answered)+' دون إجابة.';
+const note=document.createElement('p');note.className='muted';note.textContent='النتيجة للمتابعة الشخصية في هذا الاختبار فقط، ولا تُرسل إلى خادم.';
+const actions=document.createElement('div');actions.className='exam-actions';const again=document.createElement('button');again.className='btn';again.textContent='اختبار جديد';again.addEventListener('click',()=>{results.classList.add('hidden');setup.classList.remove('hidden');load()});const practice=document.createElement('a');practice.className='btn secondary';practice.href='mcq-builder.html';practice.textContent='مراجعة بنك الأسئلة';actions.append(again,practice);results.append(heading,scoreLine,details,note,actions);
+}
+start.addEventListener('click',()=>{
+load();const category=$('category').value;const pool=bank.filter(q=>!category||q.category===category);
+if(!pool.length){$('setup-status').textContent='لا توجد أسئلة في هذا التصنيف. أضف أسئلة أو اختر تصنيفًا آخر.';return}
+active=pool.slice().sort(()=>Math.random()-.5);remaining=Number($('duration').value)*60;finished=false;$('setup-status').textContent='';setup.classList.add('hidden');results.classList.add('hidden');test.classList.remove('hidden');renderQuestions();renderTimer();
+clock=setInterval(()=>{remaining--;renderTimer();if(remaining<=0)finish(true)},1000);
+});
+form.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateProgress()});
+form.addEventListener('submit',e=>{e.preventDefault();if(confirm('هل تريد تسليم الاختبار الآن؟'))finish(false)});
+$('cancel').addEventListener('click',()=>{if(confirm('سيتم إلغاء الاختبار الحالي دون حفظ النتيجة. هل تريد المتابعة؟')){if(clock)clearInterval(clock);clock=null;finished=true;test.classList.add('hidden');setup.classList.remove('hidden')}});
+load();
+})();
+</script>
+</body>
+</html>
