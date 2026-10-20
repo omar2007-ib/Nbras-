@@ -14,8 +14,10 @@ def require(ok, message):
 
 mcq_path = ROOT / "mcq-builder.html"
 practice_path = ROOT / "practice.html"
+exam_path = ROOT / "exam.html"
 require(mcq_path.exists(), "mcq-builder.html is missing.")
 require(practice_path.exists(), "practice.html is missing.")
+require(exam_path.exists(), "exam.html is missing.")
 
 if mcq_path.exists():
     mcq = mcq_path.read_text(encoding="utf-8")
@@ -63,6 +65,19 @@ class QuizParser(HTMLParser):
         elif tag == "fieldset":
             self.current = None
             self.current_label = None
+
+if exam_path.exists():
+    exam = exam_path.read_text(encoding="utf-8")
+    for label, token in {
+        "timed exam reads the MCQ bank": "athar-mcq-questions-v1",
+        "timer countdown": "setInterval",
+        "automatic submit on timeout": "finish(true)",
+        "manual submit confirmation": "هل تريد تسليم الاختبار الآن؟",
+        "result percentage": "Math.round(score/active.length*100)",
+        "local-only data disclosure": "ولا تُرسل إلى خادم",
+    }.items():
+        require(token in exam, f"Timed exam missing {label}.")
+    require('href="exam.html"' in mcq, "MCQ builder must link to timed exam mode.")
 
 quiz_count = 0
 if practice_path.exists():
