@@ -76,6 +76,7 @@
         row.title,
         ({lesson:"درس",video:"فيديو",pdf:"PDF",worksheet:"ورقة تدريب",link:"رابط"})[row.content_type] || row.content_type,
         row.course_slug === "tasees" ? "تأسيس" : "تدريبات",
+        row.description || "—",
         row.is_published ? "منشور" : "مسودة"
       ];
       for (const value of cells) { const td = document.createElement("td"); td.textContent = value; tr.append(td); }
