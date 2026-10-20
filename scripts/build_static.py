@@ -10,11 +10,9 @@ if OUT.exists():
     shutil.rmtree(OUT)
 OUT.mkdir(parents=True)
 
-# Never publish the admin UI as a static page: browser-side checks are not an authorization boundary.
-# Keep admin.html in the repository for development, but require a server-protected deployment before exposing it.
+# The admin page is static UI, but every data operation is protected by Supabase Auth,
+# database RLS, and private Storage policies. A client-side role check is UX only.
 for page in ROOT.glob("*.html"):
-    if page.name == "admin.html":
-        continue
     destination = OUT / page.name
     html = page.read_text(encoding="utf-8")
     stylesheet = '<link rel="stylesheet" href="assets/athar-design-system.css">'
@@ -42,4 +40,4 @@ if robots.exists():
 pages = list(OUT.glob("*.html"))
 print(f"Built {len(pages)} public HTML pages into {OUT.relative_to(ROOT)}/")
 print("Applied the shared Athar light-mode stylesheet to every public HTML page.")
-print("Excluded admin.html from public output until server-side authorization is deployed.")
+print("Included admin UI; Supabase Auth, RLS, and private Storage enforce permissions server-side.")
