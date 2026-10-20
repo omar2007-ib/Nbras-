@@ -64,9 +64,11 @@ class QuizParser(HTMLParser):
             self.current = None
             self.current_label = None
 
+quiz_count = 0
 if practice_path.exists():
     parser = QuizParser()
     parser.feed(practice_path.read_text(encoding="utf-8"))
+    quiz_count = len(parser.questions)
     require(len(parser.questions) > 0, "Practice page has no question fieldsets.")
     for index, question in enumerate(parser.questions, start=1):
         opts = question["options"]
@@ -84,4 +86,4 @@ if errors:
         print("FAIL: " + error)
     print(f"Quiz regression checks: FAILED ({len(errors)} issue(s))")
     sys.exit(1)
-print(f"Quiz regression checks: PASSED ({len(QuizParser().questions)} parser baseline; static invariants verified).")
+print(f"Quiz regression checks: PASSED ({quiz_count} practice questions checked; static invariants verified).")
