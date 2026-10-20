@@ -37,3 +37,28 @@ footer strong{color:#F3C36D!important}
 :where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid var(--athar-amber)!important;outline-offset:3px}
 @media(max-width:700px){header{padding-inline:5%!important}nav{gap:12px!important}nav a{font-size:.9rem}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+
+/* In-app notification center — browser-local read state in this release. */
+.athar-notification{position:relative;z-index:20;flex:0 0 auto;font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif}
+.athar-notification__toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:9px 13px;border:1px solid #D5E0E8;border-radius:12px;background:#fff;color:var(--athar-navy);font:inherit;font-weight:700;cursor:pointer;position:relative}
+.athar-notification__toggle:hover,.athar-notification__toggle[aria-expanded=true]{background:#E7F0EE;color:var(--athar-teal)}
+.athar-notification__count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--athar-amber);color:#263746;font-size:.75rem;font-weight:800}
+.athar-notification__count[hidden]{display:none}
+.athar-notification__panel{position:absolute;inset-block-start:calc(100% + 10px);inset-inline-end:0;width:min(390px,calc(100vw - 32px));max-height:min(70vh,560px);overflow:auto;padding:16px;background:#fff;border:1px solid #DCE6EB;border-radius:18px;box-shadow:0 18px 48px rgba(22,50,79,.18);color:#263746}
+.athar-notification__panel[hidden]{display:none}
+.athar-notification__head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px;border-bottom:1px solid #E4EBF0}
+.athar-notification__head h2{font-size:1.1rem;margin:0;color:var(--athar-navy)}
+.athar-notification__mark{min-height:40px;border:0;background:transparent;color:var(--athar-teal);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.athar-notification__item{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:10px;align-items:start;padding:13px 0;border-bottom:1px solid #EEF2F5}
+.athar-notification__dot{width:9px;height:9px;margin-top:8px;border-radius:50%;background:var(--athar-amber)}
+.athar-notification__item.is-read .athar-notification__dot{background:#CAD5DE}
+.athar-notification__item h3{margin:0 0 4px;font-size:.98rem;color:var(--athar-navy)}
+.athar-notification__item p{margin:0 0 5px;color:#526575;font-size:.9rem;line-height:1.65}
+.athar-notification__item small{color:#667887}
+.athar-notification__read{min-height:40px;padding:5px 9px;border:1px solid #D5E0E8;border-radius:9px;background:#fff;color:var(--athar-teal);font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}
+.athar-notification__read:disabled{color:#667887;background:#F4F7F9;cursor:default}
+.athar-notification__foot{margin:12px 0 0;color:#667887;font-size:.8rem}
+.athar-notification__empty{padding:18px 0;text-align:center;color:#526575}
+@media(max-width:760px){.athar-notification{align-self:flex-start}.athar-notification__panel{inset-inline-end:auto;inset-inline-start:0}}
+@media(prefers-reduced-motion:reduce){.athar-notification *{transition:none!important;animation:none!important}}
