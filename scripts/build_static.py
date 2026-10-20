@@ -10,11 +10,8 @@ if OUT.exists():
     shutil.rmtree(OUT)
 OUT.mkdir(parents=True)
 
-# Admin is intentionally excluded: the current admin screen is a prototype
-# with no server-side authentication or authorization.
+# Admin is included after adding Supabase auth, role checks, RLS, and private Storage.
 for page in ROOT.glob("*.html"):
-    if page.name == "admin.html":
-        continue
     destination = OUT / page.name
     html = page.read_text(encoding="utf-8")
     stylesheet = '<link rel="stylesheet" href="assets/athar-design-system.css">'
@@ -42,4 +39,4 @@ if robots.exists():
 pages = list(OUT.glob("*.html"))
 print(f"Built {len(pages)} public HTML pages into {OUT.relative_to(ROOT)}/")
 print("Applied the shared Athar light-mode stylesheet to every public HTML page.")
-print("Excluded admin.html because the prototype is not protected by server-side authorization.")
+print("Included the admin route with Supabase auth, role checks, RLS, and private Storage policies.")
