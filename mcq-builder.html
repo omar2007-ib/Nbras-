@@ -24,7 +24,23 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <header><a class="logo" href="index.html">أثَر</a><nav aria-label="القائمة الرئيسية"><a href="index.html">الرئيسية</a><a href="courses.html">الدورات</a><a href="practice.html">التدريب</a><a href="study-plan.html">خطة المذاكرة</a><a href="exam.html">اختبار مؤقت</a></nav></header>
 <main class="wrap">
 <section class="intro"><h1>صانع أسئلة الاختيار من متعدد</h1><p>أنشئ أسئلتك بنفسك، حدّد الإجابة الصحيحة، ثم راجع بنك الأسئلة وصدّره لحفظ نسخة احتياطية.</p></section>
-<div class="layout">
+
+<section class="panel" style="margin-bottom:20px">
+<h2>مولّد الأسئلة الذكي من PDF أو النص</h2>
+<p class="muted">ارفع ملف PDF أو الصق محتوى يدويًا. ستُنشأ مسودات MCQ للمراجعة قبل إضافتها إلى بنك الأسئلة. متاح لحساب المالك/المدير بعد تسجيل الدخول.</p>
+<div class="choices">
+<div class="field"><label for="source-pdf">ملف PDF</label><input id="source-pdf" type="file" accept="application/pdf,.pdf"></div>
+<div class="field"><label for="ai-count">عدد الأسئلة (1–30)</label><input id="ai-count" type="number" min="1" max="30" value="5"></div>
+<div class="field"><label for="ai-category">القسم</label><select id="ai-category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<div class="field"><label for="ai-difficulty">الصعوبة</label><select id="ai-difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option><option>متدرج</option></select></div>
+<div class="field"><label for="ai-mode">المطلوب</label><select id="ai-mode"><option value="generate">توليد أسئلة جديدة من المحتوى</option><option value="extract">استخراج الأسئلة الموجودة في المصدر</option></select></div>
+</div>
+<div class="field"><label for="source-text">أو الصق نصًا/ملاحظات هنا</label><textarea id="source-text" maxlength="30000" style="min-height:150px" placeholder="الصق شرح الدرس أو نص PDF هنا..."></textarea></div>
+<div class="actions"><button class="btn dark" id="extract-pdf" type="button">استخراج نص PDF</button><button class="btn" id="generate-ai" type="button">توليد الأسئلة</button><button class="btn light" id="approve-ai" type="button" disabled>اعتماد المسودات وإضافتها للبنك</button></div>
+<p id="ai-status" class="status" role="status" aria-live="polite"></p>
+<div id="ai-preview" class="q-list"></div>
+</section>
+\n<div class="layout">
 <section class="panel">
 <h2>إضافة سؤال جديد</h2>
 <form id="question-form">
