@@ -31,6 +31,12 @@ if mcq_path.exists():
             "Import must report success only after local storage saves successfully.")
     require("else{questions=previous;}" in mcq,
             "Import must roll back in-memory state if local storage fails.")
+    require("تعذّر حفظ السؤال. لم يُضف إلى البنك." in mcq,
+            "Question creation must roll back when local storage fails.")
+    require("تعذّر الحذف لأن المتصفح لم يحفظ التغيير." in mcq,
+            "Question deletion must roll back when local storage fails.")
+    require("تعذّر المسح لأن المتصفح لم يحفظ التغيير." in mcq,
+            "Clearing the bank must roll back when local storage fails.")
 
 class QuizParser(HTMLParser):
     def __init__(self):
