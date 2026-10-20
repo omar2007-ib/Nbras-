@@ -81,7 +81,8 @@ if(!filtered.length){list.append(el('div','empty',questions.length?'لا توج�
 filtered.forEach(q=>{
 const card=el('article','q-card'),top=el('div','q-top'),title=el('h3','',q.question),tag=el('span','tag',q.category+' · '+q.difficulty);
 top.append(title,tag);card.append(top);
-q.options.forEach((opt,i)=>card.append(el('div','option'+(i===q.correct?' correct':''),String.fromCharCode(0x623+i)+' — '+opt+(i===q.correct?' ✓':'')));
+const optionLabels=['أ','ب','ج','د'];
+q.options.forEach((opt,i)=>card.append(el('div','option'+(i===q.correct?' correct':''),optionLabels[i]+' — '+opt+(i===q.correct?' ✓':''))));
 if(q.explanation){const exp=el('p','muted','الشرح: '+q.explanation);card.append(exp)}
 const actions=el('div','actions'),del=el('button','btn danger','حذف');del.type='button';del.addEventListener('click',()=>{if(confirm('هل تريد حذف هذا السؤال؟')){questions=questions.filter(x=>x.id!==q.id);save();render();bankStatus.textContent='تم حذف السؤال.'}});
 actions.append(del);card.append(actions);list.append(card)
@@ -104,7 +105,7 @@ document.getElementById('export-csv').addEventListener('click',()=>{const rows=[
 document.getElementById('clear-all').addEventListener('click',()=>{if(confirm('تحذير: سيتم حذف جميع أسئلة هذا المتصفح. هل تريد المتابعة؟')){questions=[];save();render();bankStatus.textContent='تم مسح بنك الأسئلة.'}});
 const importFile=document.getElementById('import-file');
 document.getElementById('import-button').addEventListener('click',()=>importFile.click());
-importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||!data.every(validQuestion)){throw new Error('invalid')}const seen=new Set(questions.map(q=>q.id));const incoming=data.filter(q=>!seen.has(q.id));questions=[...incoming,...questions];save();render();bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.'}catch(e){bankStatus.textContent='تعذّر الاستيراد: الملف غير صالح أو لا يطابق صيغة أثَر.'}finally{importFile.value=''}});
+importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||!data.every(validQuestion)){throw new Error('invalid')}const seen=new Set(questions.map(q=>q.id));const incoming=[];for(const q of data){if(!seen.has(q.id)){seen.add(q.id);incoming.push(q)}}if(!incoming.length){bankStatus.textContent='لا توجد أسئلة جديدة للاستيراد؛ قد تكون الأسئلة موجودة مسبقًا.';return}const previous=questions;questions=[...incoming,...questions];if(save()){render();bankStatus.textContent='تم استيراد '+incoming.length+' سؤال جديد.'}else{questions=previous;}}catch(e){bankStatus.textContent='تعذّر الاستيراد: الملف غير صالح أو لا يطابق صيغة أثَر.'}finally{importFile.value=''}});
 render();
 })();
 </script>
