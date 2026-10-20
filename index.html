@@ -50,4 +50,5 @@ function render(){list.innerHTML='';tasks.forEach((t,i)=>{const li=document.crea
 function save(){try{localStorage.setItem('athar-tasks',JSON.stringify(tasks))}catch(e){}render()}
 form.addEventListener('submit',e=>{e.preventDefault();const text=input.value.trim();if(text){tasks.push({text,done:false});save();input.value='';input.focus()}});document.getElementById('clear').addEventListener('click',()=>{if(confirm('هل تريد مسح جميع المهام؟')){tasks=[];save()}});document.getElementById('year').textContent=new Date().getFullYear();render();
 </script>
+
 </body></html>

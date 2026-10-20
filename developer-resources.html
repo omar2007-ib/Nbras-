@@ -20,5 +20,5 @@
 const input=document.getElementById('repo-search'),cards=[...document.querySelectorAll('.card')],groups=[...document.querySelectorAll('.group')],count=document.getElementById('result-count'),empty=document.getElementById('empty');
 function filter(){const term=input.value.trim().toLowerCase();let shown=0;cards.forEach(card=>{const match=!term||card.dataset.search.includes(term);card.hidden=!match;if(match)shown++});groups.forEach(group=>{group.hidden=!group.querySelector('.card:not([hidden])')});count.textContent='عرض '+shown+' من أصل 25 مستودعًا.';empty.style.display=shown?'none':'block'}
 input.addEventListener('input',filter);
-</script><script defer src="/productos-badge.js"></script>
+</script>
 </body></html>

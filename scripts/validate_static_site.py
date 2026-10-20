@@ -8,7 +8,6 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
-OPTIONAL_EXTERNAL_INJECTED = {"/productos-badge.js"}
 
 
 class References(HTMLParser):
@@ -42,7 +41,7 @@ def main():
         return build.returncode
 
     pages = sorted(DIST.glob("*.html"))
-    errors, warnings = [], []
+    errors = []
     if not pages:
         errors.append("No HTML pages were generated in dist/.")
     if (DIST / "admin.html").exists():
@@ -70,23 +69,18 @@ def main():
             path = parts.path
             if not path or path == "/":
                 target = DIST / "index.html"
-            elif path in OPTIONAL_EXTERNAL_INJECTED:
-                warnings.append(f"{page.name}: optional injected script is not in the repository: {path}")
-                continue
             else:
                 target = (DIST / path.lstrip("/")) if path.startswith("/") else (page.parent / path)
             if not target.exists():
                 errors.append(f"{page.name}: missing local {attr} target {raw!r}.")
 
     print(f"Static pages checked: {len(pages)}")
-    for warning in sorted(set(warnings)):
-        print("WARN: " + warning)
     if errors:
         for error in errors:
             print("FAIL: " + error)
-        print(f"Result: FAILED ({len(errors)} issue(s), {len(set(warnings))} warning(s))")
+        print(f"Result: FAILED ({len(errors)} issue(s))")
         return 1
-    print(f"Result: PASSED ({len(set(warnings))} warning(s))")
+    print("Result: PASSED (0 warnings)")
     return 0
 
 
