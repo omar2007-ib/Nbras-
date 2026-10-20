@@ -81,6 +81,13 @@ if exam_path.exists():
         "manual submit confirmation": "هل تريد تسليم الاختبار الآن؟",
         "result percentage": "Math.round(score/active.length*100)",
         "local-only data disclosure": "ولا تُرسل إلى خادم",
+        "unbiased Fisher-Yates question shuffle": "function shuffle(items)",
+        "shuffle used when starting an exam": "active=shuffle(pool)",
+        "local attempt-history key": "athar-exam-history-v1",
+        "bounded local attempt history": "MAX_HISTORY=10",
+        "attempt history saved after submission": "saveAttempt({date:new Date().toISOString()",
+        "answer review visible in results": "مراجعة الإجابات",
+        "elapsed-time summary": "الوقت المستغرق:",
     }.items():
         require(token in exam, f"Timed exam missing {label}.")
     require('href="exam.html"' in mcq, "MCQ builder must link to timed exam mode.")
