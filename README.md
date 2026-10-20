@@ -12,6 +12,7 @@
 
 ## الصفحات
 - `mcq-builder.html` — أداة يدوية لإنشاء أسئلة اختيار من متعدد وتصديرها/استيرادها
+- `exam.html` — اختبار مؤقت من بنك الأسئلة المحلي مع تصحيح ونتيجة بعد التسليم
 - `design-system/athar/MASTER.md` — نظام التصميم الرئيسي للمنصة
 - `index.html` — الصفحة الرئيسية
 - `courses.html` — الدورات
@@ -27,6 +28,9 @@
 - `.agents/skills/athar-security/SKILL.md` — إرشادات مراجعة الأمان
 - `docs/implementation/engineering-hardening.md` — تقرير التحسينات وما بقي قبل الإطلاق
 - `scripts/check_site.py` — فحص ساكن للروابط المحلية وRTL والبيانات الوصفية
+- `scripts/test_quiz_content.py` — اختبارات انحدار لمحتوى التدريب وصانع الأسئلة والاختبار المؤقت
+- `scripts/validate_static_site.py` — يبني نسخة النشر ويفحص مراجع الصفحات العامة
+- `.github/workflows/static-smoke.yml` — فحص بناء الموقع على GitHub Actions
 - `.github/workflows/site-checks.yml` — تشغيل الفحص عند push وpull request
 - `supabase/storage-policies.sql` — إعداد مخزن خاص وسياسات الوصول لملفات الدورات
 - `supabase/schema.sql` — مخطط قاعدة البيانات وسياسات RLS
