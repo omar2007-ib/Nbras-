@@ -41,6 +41,7 @@ footer strong{color:#F3C36D!important}
 
 /* In-app notification center — browser-local read state in this release. */
 .athar-notification{position:relative;z-index:20;flex:0 0 auto;font-family:'IBM Plex Sans Arabic','Tajawal',sans-serif}
+.athar-notification--floating{position:fixed;top:14px;left:14px;z-index:100}
 .athar-notification__toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:9px 13px;border:1px solid #D5E0E8;border-radius:12px;background:#fff;color:var(--athar-navy);font:inherit;font-weight:700;cursor:pointer;position:relative}
 .athar-notification__toggle:hover,.athar-notification__toggle[aria-expanded=true]{background:#E7F0EE;color:var(--athar-teal)}
 .athar-notification__count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--athar-amber);color:#263746;font-size:.75rem;font-weight:800}

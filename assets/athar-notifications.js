@@ -22,7 +22,7 @@
   const esc = value => String(value).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   const mount = () => {
     const header = document.querySelector("header");
-    if (!header || document.querySelector("[data-athar-notifications]")) return;
+    if (document.querySelector("[data-athar-notifications]")) return;
     const items = safeLoad();
     const wrapper = document.createElement("div");
     wrapper.className = "athar-notification";
@@ -37,9 +37,13 @@
         <div class="athar-notification__list" aria-live="polite"></div>
         <p class="athar-notification__foot">حالة القراءة محفوظة على هذا الجهاز فقط في النسخة الحالية.</p>
       </section>`;
-    const nav = header.querySelector("nav");
+    const nav = header?.querySelector("nav");
     if (nav) nav.insertAdjacentElement("afterend", wrapper);
-    else header.appendChild(wrapper);
+    else if (header) header.appendChild(wrapper);
+    else {
+      wrapper.classList.add("athar-notification--floating");
+      document.body.appendChild(wrapper);
+    }
     const toggle = wrapper.querySelector(".athar-notification__toggle");
     const panel = wrapper.querySelector(".athar-notification__panel");
     const list = wrapper.querySelector(".athar-notification__list");
