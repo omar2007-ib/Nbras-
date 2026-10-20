@@ -1,4 +1,4 @@
-name: Nibras static checks
+name: Athar site quality checks
 on:
   push:
     branches: [main]
@@ -21,3 +21,5 @@ jobs:
         run: python scripts/check_site.py
       - name: Run quiz regression checks
         run: python scripts/test_quiz_content.py
+      - name: Build and validate deployment output
+        run: python scripts/validate_static_site.py
