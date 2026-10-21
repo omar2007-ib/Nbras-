@@ -20,7 +20,7 @@
     try {
       const client = window.supabase.createClient(config.url, config.publishableKey);
       const requested = new URLSearchParams(window.location.search).get("next") || "index.html";
-      const safeNext = /^(index|admin|courses|practice|exam|resources|study-plan|mcq-builder)\.html$/.test(requested) ? requested : "index.html";
+      const safeNext = /^(index|courses|practice|exam|resources|study-plan|mcq-builder)\.html$/.test(requested) ? requested : "index.html";
       const redirectUrl = new URL(safeNext, window.location.href).toString();
       const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl, shouldCreateUser: false } });
       if (error) throw error;
