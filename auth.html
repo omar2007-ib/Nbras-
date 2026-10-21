@@ -10,7 +10,16 @@
   <meta name="description" content="تسجيل الدخول إلى أثَر. يتطلب الدخول الفعلي إعداد خدمة المصادقة قبل الإطلاق.">
   <link rel="stylesheet" href="assets/style.css">
   <style>
-    .auth-wrap{max-width:520px;margin:56px auto;padding:24px}
+    body{background:linear-gradient(135deg,#fff8f8 0%,#fff5f5 48%,#f7efe8 100%);min-height:100vh}
+    .auth-wrap{max-width:520px;margin:clamp(28px,8vh,76px) auto;padding:24px}
+    .auth-card{position:relative;overflow:hidden}
+    .auth-card:before{content:"";display:block;width:70px;height:5px;border-radius:20px;background:#d4af37;margin-bottom:22px}
+    .brand-mark{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:16px;background:#e8b4b8;color:#2d3436;font-size:1.7rem;font-weight:900;margin-bottom:12px}
+    .auth-card h1{font-size:clamp(1.7rem,5vw,2.2rem);margin:8px 0}
+    .auth-card button{background:#e8b4b8;color:#2d3436;border:0;border-radius:12px;padding:13px;font-weight:800}
+    .auth-card input:focus{outline:3px solid #d4af3766;border-color:#b28d21}
+    .security-note{background:#fff8e5;border:1px solid #ead9a5;border-radius:12px;padding:12px;margin:16px 0;font-size:.9rem}
+    .auth-card a{color:#5c4b16}
     .auth-card{background:#fff;border:1px solid #e6e2d9;border-radius:22px;padding:28px;box-shadow:0 16px 44px #15243b12}
     .auth-card label{display:block;margin:18px 0 8px;font-weight:700}
     .auth-card input{width:100%;padding:13px;border:1px solid #d7dce3;border-radius:12px;font:inherit}
@@ -24,16 +33,16 @@
 <body>
   <main class="auth-wrap">
     <section class="auth-card">
-      <p class="eyebrow">أثَر • منصة الاستعداد للقدرات</p>
+      <div class="brand-mark" aria-hidden="true">أ</div><p class="eyebrow">أثَر • منصة الاستعداد للقدرات</p>
       <h1>مرحباً بعودتك</h1>
-      <p class="muted">سجّل الدخول برابط تحقق يُرسل إلى بريدك الإلكتروني.</p>
+      <p class="muted">مساحة آمنة للمالك والمدير. سجّل الدخول عبر رابط تحقق يُرسل إلى بريدك المسجّل.</p>
       <form id="sign-in-form">
         <label for="email">البريد الإلكتروني</label>
         <input id="email" type="email" autocomplete="email" required placeholder="name@example.com">
         <button class="button button-primary" type="submit">إرسال رابط الدخول</button>
       </form>
-      <p id="auth-message" class="auth-message" role="status" aria-live="polite"></p>
-      <p class="muted">تسجيل الدخول الحقيقي يحتاج إلى إعداد مشروع Supabase في assets/supabase-config.js.</p>
+      <p id="auth-message" class="auth-message" role="status" aria-live="polite"></p><div class="security-note">🔒 التسجيل العام مغلق. لا يمكن منح صلاحية المالك من هذه الصفحة؛ تُدار الصلاحيات من قاعدة البيانات فقط.</div>
+      <p class="muted">إذا لم يكن بريدك مسجّلًا ومصرّحًا له، فلن يُنشأ حساب جديد.</p>
       <a href="index.html">العودة إلى الرئيسية</a>
     </section>
   </main>
