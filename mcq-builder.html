@@ -134,7 +134,25 @@ document.getElementById('export-csv').addEventListener('click',()=>{const rows=[
 document.getElementById('clear-all').addEventListener('click',async()=>{const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx){bankStatus.textContent='سجّل الدخول مجددًا.';return}bankStatus.textContent='جارٍ إعادة تحميل بنك الأسئلة من قاعدة البيانات...';const {data,error}=await ctx.client.from('mcq_questions').select('id,question,options,correct_index,category,difficulty,explanation,created_at,status').order('created_at',{ascending:false}).limit(500);if(error){bankStatus.textContent='تعذرت إعادة التحميل: '+error.message;return}questions=(data||[]).map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));window.ATHAR_DB_QUESTIONS=questions;save();render();bankStatus.textContent='تمت إعادة تحميل '+questions.length+' سؤالًا من بنك السحابة.'});
 const importFile=document.getElementById('import-file');
 document.getElementById('import-button').addEventListener('click',()=>importFile.click());
-importFile.addEventListener('change',async()=>{const file=importFile.files&&importFile.files[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data)||!data.every(validQuestion)){throw new Error('invalid')}const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx)throw new Error('auth');const existing=new Set(questions.map(q=>q.question.trim()+'|'+q.options.join('|')));const incoming=data.filter(q=>!existing.has(q.question.trim()+'|'+q.options.join('|')));if(!incoming.length){bankStatus.textContent='لا توجد أسئلة جديدة للاستيراد؛ قد تكون الأسئلة موجودة مسبقًا.';return}const records=incoming.map(q=>({question:q.question,options:q.options,correct_index:q.correct,category:['كمي','لفظي','عام'].includes(q.category)?q.category:'عام',difficulty:['سهل','متوسط','صعب'].includes(q.difficulty)?q.difficulty:'متوسط',explanation:q.explanation||'',created_by:ctx.user.id,status:'approved'}));const {data:saved,error}=await ctx.client.from('mcq_questions').insert(records).select('id,question,options,correct_index,category,difficulty,explanation,created_at,status');if(error)throw error;const mapped=saved.map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));questions=[...mapped,...questions];window.ATHAR_DB_QUESTIONS=questions;if(save()){render();bankStatus.textContent='تم استيراد وحفظ '+mapped.length+' سؤالًا في قاعدة البيانات.'}}catch(e){bankStatus.textContent=e.message==='auth'?'سجّل الدخول مجددًا.':e.message||'تعذّر الاستيراد: الملف غير صالح أو تعذر حفظه في قاعدة البيانات.'}finally{importFile.value=''}});
+importFile.addEventListener('change',async()=>{
+ const file=importFile.files&&importFile.files[0];if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(!Array.isArray(data)||!data.every(validQuestion))throw new Error('invalid');
+  const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx)throw new Error('auth');
+  const signature=q=>q.question.trim().replace(/\s+/g,' ').toLocaleLowerCase()+'|'+q.options.map(x=>x.trim().replace(/\s+/g,' ').toLocaleLowerCase()).join('|');
+  const seenIds=new Set(),seenContent=new Set(questions.map(signature)),incoming=[];
+  data.forEach(q=>{const key=signature(q);if(seenIds.has(q.id)||seenContent.has(key))return;seenIds.add(q.id);seenContent.add(key);incoming.push(q)});
+  if(!incoming.length){bankStatus.textContent='لا توجد أسئلة جديدة للاستيراد؛ تم تجاهل الأسئلة المكررة.';return}
+  const records=incoming.map(q=>({question:q.question.trim(),options:q.options.map(x=>x.trim()),correct_index:q.correct,category:['كمي','لفظي','عام'].includes(q.category)?q.category:'عام',difficulty:['سهل','متوسط','صعب'].includes(q.difficulty)?q.difficulty:'متوسط',explanation:q.explanation||'',created_by:ctx.user.id,status:'approved'}));
+  const {data:saved,error}=await ctx.client.from('mcq_questions').insert(records).select('id,question,options,correct_index,category,difficulty,explanation,created_at,status');
+  if(error)throw error;
+  const mapped=(saved||[]).map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));
+  questions=[...mapped,...questions];window.ATHAR_DB_QUESTIONS=questions;render();
+  const cached=save();bankStatus.textContent='تم استيراد '+mapped.length+' سؤالًا إلى قاعدة البيانات.'+(cached?'':' تعذّر تحديث النسخة المحلية، لكن الأسئلة محفوظة في قاعدة البيانات.');
+ }catch(e){bankStatus.textContent=e.message==='auth'?'سجّل الدخول مجددًا.':e.message==='invalid'?'تعذّر الاستيراد: تأكد أن ملف JSON يحتوي على أسئلة صحيحة.':'تعذّر الاستيراد: '+(e.message||'حدث خطأ غير متوقع.');}
+ finally{importFile.value=''}
+});
 render();
 })();
 </script>

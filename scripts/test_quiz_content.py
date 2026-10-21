@@ -25,18 +25,16 @@ if mcq_path.exists():
             "MCQ choices must display Arabic labels أ، ب، ج، د in order.")
     require("String.fromCharCode(0x623+i)" not in mcq,
             "Legacy incorrect Arabic option-label generation remains.")
-    require("seen.add(q.id);incoming.push(q)" in mcq,
-            "JSON import must deduplicate repeated IDs within the imported file.")
-    require("if(save()){render();bankStatus.textContent='تم استيراد '" in mcq,
-            "Import must report success only after local storage saves successfully.")
-    require("else{questions=previous;}" in mcq,
-            "Import must roll back in-memory state if local storage fails.")
+    require("const seenIds=new Set(),seenContent=new Set(questions.map(signature)),incoming=[];" in mcq,
+            "JSON import must deduplicate repeated IDs and question content within the import and against the existing bank.")
+    require("const cached=save();bankStatus.textContent='تم استيراد '" in mcq,
+            "Import success must depend on database insert; local-cache failure must be disclosed separately.")
+    require("تعذّر تحديث النسخة المحلية، لكن الأسئلة محفوظة في قاعدة البيانات." in mcq,
+            "Import must clearly report when database save succeeds but local cache fails.")
     require("تعذّر حفظ السؤال. لم يُضف إلى البنك." in mcq,
             "Question creation must roll back when local storage fails.")
     require("تعذّر الحذف لأن المتصفح لم يحفظ التغيير." in mcq,
             "Question deletion must roll back when local storage fails.")
-    require("تعذّر المسح لأن المتصفح لم يحفظ التغيير." in mcq,
-            "Clearing the bank must roll back when local storage fails.")
 
 class QuizParser(HTMLParser):
     def __init__(self):
