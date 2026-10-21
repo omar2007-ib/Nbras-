@@ -18,7 +18,7 @@ build = read("scripts/build_static.py")
 setup = read("docs/implementation/llm-provider-gateway.md")
 
 assert "cheahjs/free-llm-api-resources" in page, "Provider catalog must credit/link the upstream directory."
-for provider in ("OpenRouter", "Groq", "Cerebras", "GitHub Models", "Hugging Face", "NVIDIA NIM", "Mistral AI", "Cloudflare"):
+for provider in ("OpenRouter", "Google AI Studio", "NVIDIA NIM", "Mistral AI", "Mistral Codestral", "Hugging Face", "Vercel AI Gateway", "Kilo Gateway", "OpenCode Zen", "Cerebras", "Groq", "Cohere", "Cloudflare", "Fireworks AI", "Baseten", "Nebius", "Novita AI", "AI21 Labs", "Upstage", "NLP Cloud", "Alibaba Cloud Model Studio", "Modal", "Inference.net", "Hyperbolic", "SambaNova Cloud", "Scaleway Generative APIs"):
     assert provider in page, f"Provider catalog missing {provider}."
 assert builder.count('id="source-pdf"') == 1, "PDF input must not be duplicated."
 assert builder.count('id="generate-ai"') == 1, "AI generation control must not be duplicated."
