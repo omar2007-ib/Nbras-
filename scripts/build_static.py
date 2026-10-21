@@ -10,11 +10,9 @@ if OUT.exists():
     shutil.rmtree(OUT)
 OUT.mkdir(parents=True)
 
-# Never publish the admin UI as a static page: browser-side checks are not an authorization boundary.
-# Keep admin.html in the repository for development, but require a server-protected deployment before exposing it.
+# Admin UI is included because its data operations are enforced by Supabase RLS and private Storage policies.
+# The browser-side role check is only a UX guard; backend policies remain the authorization boundary.
 for page in ROOT.glob("*.html"):
-    if page.name == "admin.html":
-        continue
     destination = OUT / page.name
     html = page.read_text(encoding="utf-8")
     stylesheet = '<link rel="stylesheet" href="assets/athar-design-system.css">'
