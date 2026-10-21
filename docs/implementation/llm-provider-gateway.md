@@ -11,7 +11,7 @@
 - المفاتيح لا توضع في الواجهة ولا في GitHub؛ يجب حفظها كأسرار Supabase Edge Functions.
 
 ## أمان الأسرار\nلا تضع أي مفتاح API في HTML أو ملفات JavaScript العامة أو GitHub. احفظ المفاتيح في Supabase Edge Function Secrets فقط.\n\n## الإعداد
-1. اختر مزوّدًا من الدليل، وأنشئ مفتاحًا وفق شروطه.
+- عند ضبط `LLM_API_KEY` وحده، تستخدم البوابة افتراضيًا OpenRouter مع النموذج `openai/gpt-oss-20b:free` المدرج ضمن نماذج OpenRouter المجانية في الدليل الذي تمت مراجعته. تظل الإتاحة والحصة قابلة للتغيير؛ إذا لم يكن النموذج متاحًا لحسابك، عيّن `LLM_BASE_URL` و`LLM_MODEL` إلى مزوّد/نموذج آخر متوافقين.\n- إذا وُجد `OPENAI_API_KEY` وحده، يستمر مسار التوافق القديم مع OpenAI و`gpt-4o-mini`.\n\n1. اختر مزوّدًا من الدليل، وأنشئ مفتاحًا وفق شروطه.
 2. من Supabase Dashboard → Edge Functions → Secrets، أضف:
    - `LLM_API_KEY`: المفتاح الخاص.
    - `LLM_BASE_URL`: عنوان API الأساسي الموثق للمزوّد، من دون `/chat/completions`.
