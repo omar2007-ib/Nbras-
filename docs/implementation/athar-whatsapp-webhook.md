@@ -17,7 +17,7 @@
 - `META_APP_SECRET`: App Secret من تطبيق Meta.
 - `WHATSAPP_ACCESS_TOKEN`: رمز وصول صالح لإرسال رسائل WhatsApp Cloud API.
 - `WHATSAPP_PHONE_NUMBER_ID`: معرّف رقم الهاتف في WhatsApp Business Platform.
-- `WHATSAPP_API_VERSION`: إصدار Graph API مدعوم بحساب Meta (اختياري؛ الافتراضي الحالي في الكود `v23.0`).
+- `WHATSAPP_API_VERSION`: إصدار Graph API مدعوم بحساب Meta (اختياري؛ الافتراضي الحالي في الكود `v26.0`).
 - `LLM_API_KEY` مع `LLM_BASE_URL` و`LLM_MODEL`، أو `GROQ_API_KEY` مع إعدادات Groq الاختيارية. يستخدم البوت إعدادات المساعد الحالية نفسها.
 - `SUPABASE_URL` و`SUPABASE_SERVICE_ROLE_KEY` يجب أن يكونا متاحين لبيئة Edge Function.
 
