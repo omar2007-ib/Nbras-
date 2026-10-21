@@ -1,0 +1,87 @@
+/* ATHAR premium interface refresh — shared across all pages */
+:root{
+ --athar-navy:#12304A;--athar-teal:#087F73;--athar-amber:#F0B44D;
+ --athar-offwhite:#F6F9FC;--athar-pale:#E9F4F1;--athar-slate:#253746;
+ --athar-line:#DCE6ED;--athar-shadow:0 16px 42px rgba(18,48,74,.075);
+}
+html{scroll-padding-top:24px}
+body{background:linear-gradient(180deg,#F8FAFC 0%,#F4F8FA 100%)!important;letter-spacing:0}
+header{
+ position:sticky;top:0;z-index:50;min-height:76px;
+ display:flex;align-items:center;gap:20px;
+ padding:12px max(4%,calc((100% - 1240px)/2))!important;
+ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+header .logo{flex-shrink:0;gap:11px;font-size:1.48rem!important;font-weight:900}
+header .logo img,header .logo:not(:has(img))::before{
+ width:44px;height:44px;flex:0 0 44px;border-radius:14px;
+ box-shadow:0 7px 18px rgba(18,48,74,.14)
+}
+header nav{margin-inline-start:auto;display:flex;align-items:center;justify-content:flex-end;gap:4px 7px}
+header nav a{
+ display:inline-flex;align-items:center;min-height:40px;padding:7px 10px!important;
+ border-radius:10px;font-size:.9rem!important;font-weight:700!important;
+ text-decoration:none;white-space:nowrap
+}
+header nav a:hover,header nav a.active{background:#E7F4F0!important;color:#087F73!important}
+.hero{
+ isolation:isolate;padding:clamp(48px,7vw,86px) 0!important;
+ border-bottom:1px solid #E2EAF0;position:relative
+}
+.hero .wrap{width:min(1160px,90%);margin-inline:auto}
+.hero .badge{box-shadow:0 3px 10px rgba(8,127,115,.06)}
+.hero h1{max-width:900px;font-size:clamp(2.15rem,5vw,4.1rem)!important;line-height:1.25!important;letter-spacing:-.035em!important;margin:20px 0 18px!important}
+.hero p{font-size:clamp(1rem,1.6vw,1.15rem)!important;line-height:2!important;max-width:720px}
+.hero .btn{margin-top:18px}
+section:not(.hero),main section{scroll-margin-top:90px}
+.section,main.wrap.section{padding-top:clamp(32px,5vw,60px)!important;padding-bottom:clamp(38px,5vw,64px)!important}
+.section-head,.section-title{margin-bottom:30px}
+.section-head h2,.section-title h2{font-size:clamp(1.55rem,3vw,2.25rem)!important;letter-spacing:-.02em}
+.grid{gap:clamp(14px,2vw,24px)!important;align-items:stretch}
+.card,.feature,.panel,.auth-card,.form-card,.dashboard-card,.resource-card,.course-card{
+ position:relative;overflow:hidden;transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease!important;
+ border-radius:20px!important;box-shadow:0 8px 28px rgba(18,48,74,.045)!important
+}
+.card:hover,.feature:hover,.resource-card:hover,.course-card:hover{
+ transform:translateY(-3px);border-color:#B8D8D1!important;box-shadow:0 18px 42px rgba(18,48,74,.10)!important
+}
+.card h2,.card h3{letter-spacing:-.015em}
+.card p,.feature p{line-height:1.9}
+.icon,.num{box-shadow:inset 0 0 0 1px rgba(8,127,115,.035)}
+.btn,button.btn,.button-primary,input[type=submit]{
+ min-height:46px!important;border-radius:12px!important;padding:11px 19px!important;
+ font-weight:800!important;box-shadow:0 7px 16px rgba(8,127,115,.12)!important
+}
+.btn:active,button:active{transform:translateY(1px)}
+.callout{border-radius:16px!important;line-height:1.9}
+input,select,textarea{min-height:46px;border-radius:12px!important}
+footer{margin-top:36px!important;padding:32px max(5%,calc((100% - 1160px)/2))!important;line-height:2}
+footer strong{font-size:1.2rem}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--athar-line);margin:24px 0}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}
+th,td{padding:12px 14px;border-bottom:1px solid #E5ECF1;text-align:right}
+th{background:#EAF4F2;color:#12304A}
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #F0B44D!important;outline-offset:3px}
+@media(max-width:980px){
+ header{gap:10px!important;flex-wrap:wrap}
+ header nav{width:100%;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:2px 0 7px;scrollbar-width:thin}
+ header nav a{flex:0 0 auto}
+}
+@media(max-width:600px){
+ header{position:relative;padding:12px 4%!important}
+ header .logo{font-size:1.35rem!important}
+ header nav{gap:3px}
+ header nav a{font-size:.84rem!important;padding:6px 9px!important}
+ .hero{padding:42px 0 48px!important}
+ .hero .wrap{width:91%}
+ .hero h1{font-size:clamp(2rem,9vw,2.8rem)!important}
+ .section,main.wrap.section{padding-top:32px!important;padding-bottom:38px!important}
+ .card,.feature,.panel{padding:18px!important}
+ .grid{grid-template-columns:minmax(0,1fr)!important}
+ .course-cover{max-width:none}
+ footer{margin-top:20px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
