@@ -31,10 +31,16 @@ if mcq_path.exists():
             "Import success must depend on database insert; local-cache failure must be disclosed separately.")
     require("تعذّر تحديث النسخة المحلية، لكن الأسئلة محفوظة في قاعدة البيانات." in mcq,
             "Import must clearly report when database save succeeds but local cache fails.")
-    require("تعذّر حفظ السؤال. لم يُضف إلى البنك." in mcq,
-            "Question creation must roll back when local storage fails.")
-    require("تعذّر الحذف لأن المتصفح لم يحفظ التغيير." in mcq,
-            "Question deletion must roll back when local storage fails.")
+    require("ctx.client.from('mcq_questions').insert({question:q.question" in mcq,
+            "New questions must be inserted into the authenticated Supabase bank.")
+    require("تعذّر حفظ السؤال في قاعدة البيانات:" in mcq,
+            "Question creation must show database errors without claiming success.")
+    require("ctx.client.from('mcq_questions').delete().eq('id',q.id)" in mcq,
+            "Deleting a question must remove it from the cloud bank, not only the local cache.")
+    require("تم الحذف من قاعدة البيانات، لكن تعذّر تحديث النسخة المحلية." in mcq,
+            "Question deletion must distinguish cloud success from local-cache failure.")
+    require(mcq.count("document.getElementById('export-json').addEventListener('click'") == 1,
+            "JSON export must not have duplicate click handlers.")
 
 class QuizParser(HTMLParser):
     def __init__(self):

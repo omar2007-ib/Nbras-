@@ -105,7 +105,7 @@ top.append(title,tag);card.append(top);
 const optionLabels=['أ','ب','ج','د'];
 q.options.forEach((opt,i)=>card.append(el('div','option'+(i===q.correct?' correct':''),optionLabels[i]+' — '+opt+(i===q.correct?' ✓':''))));
 if(q.explanation){const exp=el('p','muted','الشرح: '+q.explanation);card.append(exp)}
-const actions=el('div','actions'),del=el('button','btn danger','حذف');del.type='button';del.addEventListener('click',()=>{if(confirm('هل تريد حذف هذا السؤال؟')){const previous=questions;questions=questions.filter(x=>x.id!==q.id);if(save()){render();bankStatus.textContent='تم حذف السؤال.'}else{questions=previous;render();bankStatus.textContent='تعذّر الحذف لأن المتصفح لم يحفظ التغيير.'}}});
+const actions=el('div','actions'),del=el('button','btn danger','حذف');del.type='button';del.addEventListener('click',async()=>{if(!confirm('هل تريد حذف هذا السؤال من بنك السحابة؟'))return;const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx){bankStatus.textContent='سجّل الدخول مجددًا.';return}del.disabled=true;try{const {error}=await ctx.client.from('mcq_questions').delete().eq('id',q.id);if(error)throw error;const previous=questions;questions=questions.filter(x=>x.id!==q.id);window.ATHAR_DB_QUESTIONS=questions;render();if(save()){bankStatus.textContent='تم حذف السؤال من بنك السحابة.'}else{bankStatus.textContent='تم الحذف من قاعدة البيانات، لكن تعذّر تحديث النسخة المحلية.'}}catch(error){bankStatus.textContent='تعذّر حذف السؤال: '+(error.message||'تحقق من الصلاحيات والاتصال.');del.disabled=false}});
 actions.append(del);card.append(actions);list.append(card)
 })
 }
