@@ -206,16 +206,27 @@ generate.addEventListener('click',async()=>{
  approve.disabled=!drafts.length;say('تم إنشاء '+drafts.length+' مسودة. راجع صحة الإجابات قبل اعتمادها.');
  }catch(e){say(e.message||'حدث خطأ أثناء التوليد.',true)}finally{generate.disabled=false}
 });
+let approvingDrafts=false;
 approve.addEventListener('click',async()=>{
- const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx||!drafts.length)return;
- approve.disabled=true;say('جارٍ فحص التكرار ثم حفظ الأسئلة في قاعدة البيانات...');
- const records=drafts.filter(q=>!(window.ATHAR_DB_QUESTIONS||[]).some(old=>String(old.question||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar')===String(q.question||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar'))).map(q=>({question:q.question,options:q.options,correct_index:q.correct,category:'كمي',difficulty:['سهل','متوسط','صعب'].includes(q.difficulty)?q.difficulty:'متوسط',explanation:q.explanation||'',created_by:ctx.user.id,status:'approved',source_name:pdfInput.files?.[0]?.name||'نص مدخل يدويًا'}));
- if(!records.length){say('لم تُحفظ أي أسئلة لأن جميعها مكرر بالفعل.');drafts=[];approve.disabled=true;return;}
- const {data,error}=await ctx.client.from('mcq_questions').insert(records).select('id,question,options,correct_index,category,difficulty,explanation,created_at,status');
- if(error){say('تعذّر حفظ الأسئلة: '+error.message,true);approve.disabled=false;return}
- const local=data.map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));
- try{const old=JSON.parse(localStorage.getItem('athar-mcq-questions-v1')||'[]');localStorage.setItem('athar-mcq-questions-v1',JSON.stringify([...local,...(Array.isArray(old)?old:[])]))}catch(e){}
- window.ATHAR_DB_QUESTIONS=[...local,...(window.ATHAR_DB_QUESTIONS||[])];drafts=[];preview.replaceChildren();say('تم حفظ '+local.length+' سؤالًا في بنك أثَر السحابي.');approve.disabled=true;window.dispatchEvent(new CustomEvent('athar:staff-ready'));
+ const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx||!drafts.length||approvingDrafts)return;
+ approvingDrafts=true;approve.disabled=true;say('جارٍ فحص التكرار ثم حفظ الأسئلة في قاعدة البيانات...');
+ try{
+  const normalized=s=>String(s||'').normalize('NFKC').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+  const existing=new Set((window.ATHAR_DB_QUESTIONS||[]).map(q=>normalized(q.question)));
+  const seen=new Set();
+  const records=drafts.filter(q=>{
+   if(!q||typeof q.question!=='string'||!normalized(q.question)||!Array.isArray(q.options)||q.options.length!==4||q.options.some(o=>typeof o!=='string'||!normalized(o))||new Set(q.options.map(normalized)).size!==4||!Number.isInteger(q.correct)||q.correct<0||q.correct>3)return false;
+   const key=normalized(q.question);if(existing.has(key)||seen.has(key))return false;seen.add(key);return true;
+  }).map(q=>({question:q.question.trim().slice(0,4000),options:q.options.map(o=>o.trim().slice(0,1000)),correct_index:q.correct,category:['كمي','لفظي','عام'].includes(q.category)?q.category:'كمي',difficulty:['سهل','متوسط','صعب'].includes(q.difficulty)?q.difficulty:'متوسط',explanation:typeof q.explanation==='string'?q.explanation.slice(0,5000):'',created_by:ctx.user.id,status:'approved',source_name:pdfInput.files?.[0]?.name||'نص مدخل يدويًا'}));
+  if(!records.length){say('لم تُحفظ أي أسئلة؛ راجع المسودات أو تم تجاهل الأسئلة المكررة وغير الصالحة.');drafts=[];preview.replaceChildren();return;}
+  const {data,error}=await ctx.client.from('mcq_questions').insert(records).select('id,question,options,correct_index,category,difficulty,explanation,created_at,status');
+  if(error)throw error;
+  const local=(data||[]).map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));
+  if(!local.length)throw new Error('لم تُرجع قاعدة البيانات الأسئلة المحفوظة.');
+  try{const old=JSON.parse(localStorage.getItem('athar-mcq-questions-v1')||'[]');localStorage.setItem('athar-mcq-questions-v1',JSON.stringify([...local,...(Array.isArray(old)?old.filter(validQuestion):[])]))}catch(e){}
+  window.ATHAR_DB_QUESTIONS=[...local,...(window.ATHAR_DB_QUESTIONS||[])];drafts=[];preview.replaceChildren();say('تم حفظ '+local.length+' سؤالًا في بنك أثَر السحابي.');window.dispatchEvent(new CustomEvent('athar:staff-ready'));
+ }catch(error){say('تعذّر اعتماد الأسئلة: '+(error.message||'تحقق من الاتصال والصلاحيات.'),true)}
+ finally{approvingDrafts=false;approve.disabled=!drafts.length}
 });
 })();
 </script>
