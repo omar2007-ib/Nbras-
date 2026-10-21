@@ -253,32 +253,43 @@
   }
   async function setPublished(row, value, button) {
     if (button) button.disabled = true;
-    const { error } = await client.from("course_content").update({ is_published: value, updated_at: new Date().toISOString() }).eq("id", row.id);
-    if (button) button.disabled = false;
-    if (error) return say("تعذر تحديث حالة النشر: " + error.message, true);
-    await loadContent();
-    say(value ? "تم نشر المحتوى." : "تم إلغاء النشر؛ المحتوى محفوظ كمسودة.");
+    try {
+      const { error } = await client.from("course_content")
+        .update({ is_published: value, updated_at: new Date().toISOString() })
+        .eq("id", row.id);
+      if (error) throw error;
+      await loadContent();
+      say(value ? "تم نشر المحتوى." : "تم إلغاء النشر؛ المحتوى محفوظ كمسودة.");
+    } catch (error) {
+      say("تعذر تحديث حالة النشر: " + (error?.message || "تعذر الاتصال بالخدمة. حاول مرة أخرى."), true);
+    } finally {
+      if (button) button.disabled = false;
+    }
   }
   async function removeRow(row, button) {
     if (!confirm("هل تريد حذف هذا المحتوى نهائيًا؟ لا يمكن التراجع عن الحذف.")) return;
     if (button) button.disabled = true;
-    // Remove the private object first. If storage deletion fails, keep the
-    // database row so staff can retry and the file remains discoverable.
-    if (row.storage_path) {
-      const { error: storageError } = await client.storage.from("athar-content").remove([row.storage_path]);
-      if (storageError) {
-        if (button) button.disabled = false;
-        return say("تعذر حذف الملف من التخزين؛ احتفظنا بسجل المحتوى لتتمكن من إعادة المحاولة. السبب: " + storageError.message, true);
+    try {
+      // Remove the private object first. If storage deletion fails, keep the
+      // database row so staff can retry and the file remains discoverable.
+      if (row.storage_path) {
+        const { error: storageError } = await client.storage.from("athar-content").remove([row.storage_path]);
+        if (storageError) {
+          return say("تعذر حذف الملف من التخزين؛ احتفظنا بسجل المحتوى لتتمكن من إعادة المحاولة. السبب: " + storageError.message, true);
+        }
       }
-    }
-    const { error: deleteError } = await client.from("course_content").delete().eq("id", row.id);
-    if (deleteError) {
+      const { error: deleteError } = await client.from("course_content").delete().eq("id", row.id);
+      if (deleteError) {
+        await loadContent();
+        return say("تم حذف الملف من التخزين، لكن تعذر حذف سجل المكتبة. أعد المحاولة لحذف السجل. السبب: " + deleteError.message, true);
+      }
       await loadContent();
+      say("تم حذف المحتوى وسجلّه من المكتبة.");
+    } catch (error) {
+      say("تعذر إكمال حذف المحتوى بسبب مشكلة اتصال. تحقق من حالة الملف قبل تكرار العملية. " + (error?.message || ""), true);
+    } finally {
       if (button) button.disabled = false;
-      return say("تم حذف الملف من التخزين، لكن تعذر حذف سجل المكتبة. أعد المحاولة لحذف السجل. السبب: " + deleteError.message, true);
     }
-    await loadContent();
-    say("تم حذف المحتوى وسجلّه من المكتبة.");
   }
   function download(name, type, text) {
     const blob = new Blob([text], { type });
