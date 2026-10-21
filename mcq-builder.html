@@ -89,7 +89,8 @@ const status=document.getElementById('form-status');
 const bankStatus=document.getElementById('bank-status');
 let questions=[];
 try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))questions=saved.filter(validQuestion)}catch(e){questions=[]}
-function validQuestion(q){return q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string')&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&typeof q.category==='string'&&typeof q.difficulty==='string'}
+function normalizeText(value){return String(value??'').normalize('NFKC').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar')}
+function validQuestion(q){return !!(q&&typeof q.id==='string'&&q.id.length<=160&&typeof q.question==='string'&&normalizeText(q.question)&&q.question.length<=4000&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string'&&normalizeText(x)&&x.length<=1000)&&new Set(q.options.map(normalizeText)).size===4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&['كمي','لفظي','عام'].includes(q.category)&&['سهل','متوسط','صعب'].includes(q.difficulty)&&(q.explanation===undefined||typeof q.explanation==='string'&&q.explanation.length<=5000))}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(questions));return true}catch(e){bankStatus.textContent='تعذّر الحفظ. قد تكون مساحة تخزين المتصفح ممتلئة.';return false}}
 function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
 function render(){
@@ -109,19 +110,29 @@ const actions=el('div','actions'),del=el('button','btn danger','حذف');del.typ
 actions.append(del);card.append(actions);list.append(card)
 })
 }
+let savingQuestion=false;
 form.addEventListener('submit',async e=>{
 e.preventDefault();
+if(savingQuestion)return;
 const question=document.getElementById('question').value.trim();
 const options=[0,1,2,3].map(i=>document.getElementById('option'+i).value.trim());
 if(!question||options.some(x=>!x)){status.textContent='أكمل نص السؤال والخيارات الأربعة.';return}
+if(question.length>4000||options.some(x=>x.length>1000)){status.textContent='تجاوز السؤال أو أحد الخيارات الحد المسموح للطول.';return}
+if(new Set(options.map(normalizeText)).size!==4){status.textContent='يجب أن تكون الخيارات الأربعة مختلفة.';return}
+if(questions.some(existing=>normalizeText(existing.question)===normalizeText(question))){status.textContent='يوجد سؤال بالنص نفسه في البنك. راجعه قبل إضافة نسخة جديدة.';return}
 const q={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9),question,options,correct:Number(document.getElementById('correct').value),category:document.getElementById('category').value,difficulty:document.getElementById('difficulty').value,explanation:document.getElementById('explanation').value.trim(),createdAt:new Date().toISOString()};
+if(!validQuestion(q)){status.textContent='بيانات السؤال غير صالحة. راجع النص والخيارات والتصنيف والصعوبة.';return}
 const ctx=window.ATHAR_STAFF_CONTEXT;
 if(!ctx){status.textContent='انتهت جلسة الإدارة. سجّل الدخول مجددًا.';return}
+savingQuestion=true;
+const submitButton=form.querySelector('button[type="submit"]');
+if(submitButton)submitButton.disabled=true;
 try{
  const {data:saved,error}=await ctx.client.from('mcq_questions').insert({question:q.question,options:q.options,correct_index:q.correct,category:q.category,difficulty:q.difficulty,explanation:q.explanation,created_by:ctx.user.id,status:'approved'}).select('id,created_at').single();
  if(error)throw error;
  q.id=saved.id;q.createdAt=saved.created_at;q.status='approved';
 }catch(error){status.textContent='تعذّر حفظ السؤال في قاعدة البيانات: '+(error.message||'تحقق من الصلاحيات والاتصال.');return}
+finally{savingQuestion=false;if(submitButton)submitButton.disabled=false}
 questions.unshift(q);
 if(save()){render();form.reset();status.textContent='تم حفظ السؤال في بنك أثَر السحابي.';document.getElementById('question').focus()}else{questions=questions.filter(item=>item.id!==q.id);status.textContent='تم الحفظ السحابي، لكن تعذّر تحديث النسخة المحلية.'}
 });
@@ -136,8 +147,9 @@ document.getElementById('import-button').addEventListener('click',()=>importFile
 importFile.addEventListener('change',async()=>{
  const file=importFile.files&&importFile.files[0];if(!file)return;
  try{
+  if(file.size>5*1024*1024)throw new Error('large');
   const data=JSON.parse(await file.text());
-  if(!Array.isArray(data)||!data.every(validQuestion))throw new Error('invalid');
+  if(!Array.isArray(data)||!data.length||data.length>500||!data.every(validQuestion))throw new Error('invalid');
   const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx)throw new Error('auth');
   const signature=q=>q.question.trim().replace(/\s+/g,' ').toLocaleLowerCase()+'|'+q.options.map(x=>x.trim().replace(/\s+/g,' ').toLocaleLowerCase()).join('|');
   const seenIds=new Set(),seenContent=new Set(questions.map(signature)),incoming=[];
@@ -149,7 +161,7 @@ importFile.addEventListener('change',async()=>{
   const mapped=(saved||[]).map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));
   questions=[...mapped,...questions];window.ATHAR_DB_QUESTIONS=questions;render();
   const cached=save();bankStatus.textContent='تم استيراد '+mapped.length+' سؤالًا إلى قاعدة البيانات.'+(cached?'':' تعذّر تحديث النسخة المحلية، لكن الأسئلة محفوظة في قاعدة البيانات.');
- }catch(e){bankStatus.textContent=e.message==='auth'?'سجّل الدخول مجددًا.':e.message==='invalid'?'تعذّر الاستيراد: تأكد أن ملف JSON يحتوي على أسئلة صحيحة.':'تعذّر الاستيراد: '+(e.message||'حدث خطأ غير متوقع.');}
+ }catch(e){bankStatus.textContent=e.message==='auth'?'سجّل الدخول مجددًا.':e.message==='large'?'حجم ملف JSON يجب ألا يتجاوز 5 ميجابايت.':e.message==='invalid'?'تعذّر الاستيراد: يجب أن يحتوي الملف على 1 إلى 500 سؤال صحيح، بأربعة خيارات مختلفة لكل سؤال.':'تعذّر الاستيراد: '+(e.message||'حدث خطأ غير متوقع.');}
  finally{importFile.value=''}
 });
 render();
