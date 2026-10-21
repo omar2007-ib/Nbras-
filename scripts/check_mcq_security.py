@@ -5,34 +5,49 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "supabase" / "migrations" / "20261021180000_protect_mcq_answer_keys.sql"
+BASE_MIGRATION = ROOT / "supabase" / "migrations" / "20261021180000_protect_mcq_answer_keys.sql"
+VIEW_MIGRATION = ROOT / "supabase" / "migrations" / "20261021182000_make_mcq_public_view_invoker_safe.sql"
+
+
+def compact_sql(path: Path) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"--[^\n]*", "", path.read_text(encoding="utf-8")).lower())
 
 
 def main() -> int:
-    if not MIGRATION.is_file():
-        print(f"FAIL: missing security migration: {MIGRATION.relative_to(ROOT)}")
+    errors = []
+    for path in (BASE_MIGRATION, VIEW_MIGRATION):
+        if not path.is_file():
+            errors.append(f"Missing security migration: {path.relative_to(ROOT)}")
+    if errors:
+        for error in errors:
+            print("FAIL: " + error)
         return 1
 
-    sql = re.sub(r"--[^\n]*", "", MIGRATION.read_text(encoding="utf-8")).lower()
-    compact = re.sub(r"\s+", " ", sql)
-    errors = []
+    base = compact_sql(BASE_MIGRATION)
+    view = compact_sql(VIEW_MIGRATION)
 
-    if "revoke select on table public.mcq_questions from anon" not in compact:
-        errors.append("Anonymous clients must not SELECT the base question table.")
-    if "create policy staff_mcq_read" not in compact or "to authenticated" not in compact:
+    if "revoke select on table public.mcq_questions from anon, public" not in base:
+        errors.append("Anonymous/PUBLIC roles must not have table-level SELECT.")
+    if "create policy staff_mcq_read" not in base or "to authenticated" not in base:
         errors.append("Base-table SELECT policy must be limited to authenticated staff.")
-    if "p.role in ('owner', 'admin')" not in compact:
+    if "p.role in ('owner', 'admin')" not in base:
         errors.append("Base-table SELECT policy must check owner/admin role.")
+    if "create policy mcq_public_read" not in view or "to anon" not in view or "using (status = 'approved')" not in view:
+        errors.append("Anonymous RLS policy must expose approved questions only.")
+    if "grant select (" not in view or "updated_at ) on table public.mcq_questions to anon" not in view:
+        errors.append("Anonymous access must use a safe column-level grant.")
+    if "security_invoker = true" not in view:
+        errors.append("Public view must run with invoker privileges and RLS.")
     view_match = re.search(
         r"create or replace view public\.mcq_public_questions.*?as select (.*?) from public\.mcq_questions where status = 'approved'",
-        compact,
+        view,
     )
     if not view_match:
         errors.append("Answer-free public view must expose approved questions only.")
     elif "correct_index" in view_match.group(1):
         errors.append("Public MCQ view must never expose correct_index.")
-    if "grant select on table public.mcq_public_questions to anon, authenticated" not in compact:
-        errors.append("Public view must be readable by public learning clients.")
+    if "grant select on table public.mcq_public_questions to anon, authenticated" not in base:
+        errors.append("Public view must be readable by learning clients.")
 
     if errors:
         for error in errors:
