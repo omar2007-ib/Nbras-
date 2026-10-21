@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const allowedOrigins = new Set([
   "https://athar-learning-sa.onrender.com",
+  "https://athar-learning-platform.vercel.app",
   "https://a0c3c665ce519ea5d306bd29288cb5ee.preview.bl.run",
   "http://localhost:8000",
   "http://127.0.0.1:8000",
