@@ -114,7 +114,7 @@ async function generateAnswer(message: string, phone: string): Promise<string> {
 async function sendWhatsApp(to: string, text: string): Promise<number> {
   const token = Deno.env.get("WHATSAPP_ACCESS_TOKEN")?.trim();
   const phoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")?.trim();
-  const version = Deno.env.get("WHATSAPP_API_VERSION")?.trim() || "v23.0";
+  const version = Deno.env.get("WHATSAPP_API_VERSION")?.trim() || "v26.0";
   if (!token || !phoneId) throw new Error("WHATSAPP_CREDENTIALS_MISSING");
   const response = await fetch(`https://graph.facebook.com/${version}/${phoneId}/messages`, {
     method: "POST",
