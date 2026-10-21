@@ -178,7 +178,11 @@
         stopScanner();
         return;
       }
-    } catch (_) { /* Continue scanning; transient frame decode errors are expected. */ }
+    } catch (_) {
+      // If the native detector fails at runtime, fall back to jsQR instead of retrying it forever.
+      if (detector && window.jsQR) detector = null;
+      /* Continue scanning; transient frame decode errors are expected. */
+    } }
     scanFrame = requestAnimationFrame(scanLoop);
   };
   startScanButton?.addEventListener("click", async () => {
