@@ -195,16 +195,24 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  const rawAiKey = Deno.env.get("LLM_API_KEY") || Deno.env.get("OPENAI_API_KEY") || "";
+  // A provider-specific Groq secret takes precedence over legacy generic keys.
+  // This lets operators switch providers without overwriting the existing LLM_API_KEY.
+  const groqSecret = Deno.env.get("GROQ_API_KEY")?.trim() || "";
+  const usingGroqSecret = Boolean(groqSecret);
+  const rawAiKey = groqSecret || Deno.env.get("LLM_API_KEY") || Deno.env.get("OPENAI_API_KEY") || "";
   // Accept a copied key with surrounding whitespace or a pasted Bearer prefix,
   // but never send empty or obvious placeholder values to the provider.
   const aiKey = rawAiKey.trim().replace(/^Bearer\s+/i, "").trim();
-  const legacy = Boolean(Deno.env.get("OPENAI_API_KEY")?.trim()) && !Deno.env.get("LLM_API_KEY")?.trim();
-  const base = (Deno.env.get("LLM_BASE_URL")?.trim() ||
-    (legacy ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1")).replace(/\/+$/, "");
-  const model = (Deno.env.get("LLM_MODEL")?.trim() || Deno.env.get("OPENAI_MODEL")?.trim() ||
-    (legacy ? "gpt-4o-mini" : "openai/gpt-oss-20b:free"));
-  const provider = Deno.env.get("LLM_PROVIDER")?.trim() || (legacy ? "OpenAI" : "OpenRouter");
+  const legacy = Boolean(Deno.env.get("OPENAI_API_KEY")?.trim()) && !Deno.env.get("LLM_API_KEY")?.trim() && !usingGroqSecret;
+  const base = (usingGroqSecret
+    ? (Deno.env.get("GROQ_BASE_URL")?.trim() || "https://api.groq.com/openai/v1")
+    : (Deno.env.get("LLM_BASE_URL")?.trim() ||
+      (legacy ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1"))).replace(/\/+$/, "");
+  const model = usingGroqSecret
+    ? (Deno.env.get("GROQ_MODEL")?.trim() || "openai/gpt-oss-20b")
+    : (Deno.env.get("LLM_MODEL")?.trim() || Deno.env.get("OPENAI_MODEL")?.trim() ||
+      (legacy ? "gpt-4o-mini" : "openai/gpt-oss-20b:free"));
+  const provider = usingGroqSecret ? "Groq" : (Deno.env.get("LLM_PROVIDER")?.trim() || (legacy ? "OpenAI" : "OpenRouter"));
   const placeholderKey = /^(?:your[_ -]?|replace[_ -]?|paste[_ -]?|insert[_ -]?|example[_ -]?|changeme\b|<.*>)/i.test(aiKey);
   if (!aiKey || placeholderKey) {
     return reply({
