@@ -16,7 +16,8 @@
     return window.supabase.createClient(config.url, config.publishableKey);
   };
   const redirect = () => {
-    const requested = new URLSearchParams(location.search).get("next") || "index.html";
+    const params = new URLSearchParams(location.search);
+    const requested = params.get("next") || (params.get("owner") === "1" ? "admin.html" : "index.html");
     const safe = /^(index|admin|courses|practice|exam|resources|study-plan|mcq-builder)\.html$/.test(requested) ? requested : "index.html";
     return new URL(safe, location.href).toString();
   };
@@ -28,7 +29,7 @@
       const result = await client().auth.signInWithOAuth({provider, options:{redirectTo:redirect()}});
       if (result.error) throw result.error;
     } catch (_) {
-      say("تعذر بدء تسجيل الدخول. قد يحتاج مزوّد الخدمة إلى التفعيل من إعدادات Supabase.", true);
+      say(provider === "google" ? "تعذر بدء دخول Google. تأكد من تفعيل Google في Supabase وضبط Client ID وSecret وعنوان الرجوع." : "تعذر بدء دخول Apple. تأكد من تفعيل Apple في Supabase وضبط Services ID والمفاتيح وعنوان الرجوع.", true);
       button.disabled = false;
       button.textContent = old;
     }
