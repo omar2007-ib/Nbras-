@@ -17,7 +17,7 @@ CREATE POLICY staff_mcq_read
     )
   );
 
-REVOKE SELECT ON TABLE public.mcq_questions FROM anon;
+REVOKE SELECT ON TABLE public.mcq_questions FROM anon, PUBLIC;
 
 CREATE OR REPLACE VIEW public.mcq_public_questions
 WITH (security_barrier = true)
