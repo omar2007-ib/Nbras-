@@ -47,4 +47,4 @@ if robots.exists():
 pages = list(OUT.glob("*.html"))
 print(f"Built {len(pages)} public HTML pages into {OUT.relative_to(ROOT)}/")
 print("Applied the shared Athar light-mode stylesheet to every public HTML page.")
-print("Excluded admin.html from public output until server-side authorization is deployed.")
+print("Included admin.html; data access remains protected by Supabase RLS and Storage policies.")
