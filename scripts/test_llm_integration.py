@@ -12,6 +12,8 @@ def read(path: str) -> str:
 page = read("llm-providers.html")
 builder = read("mcq-builder.html")
 auth = read("assets/auth.js")
+admin = read("assets/admin.js")
+admin_page = read("admin.html")
 function = read("supabase/functions/generate-mcq/index.ts")
 readme = read("README.md")
 build = read("scripts/build_static.py")
@@ -28,6 +30,11 @@ assert "profiles" in builder and "owner" in builder and "admin" in builder, "Gua
 assert "pdf.min.js" in builder and "pdf.worker.min.js" in builder, "PDF.js and its worker must be configured."
 assert ".from('mcq_questions').insert" in builder, "Manual MCQs must save to the cloud database."
 assert "shouldCreateUser: false" in auth, "Public account creation must stay disabled."
+assert '<option value="link">رابط خارجي</option>' in admin_page, "Admin content form must offer external links."
+assert 'name="external_url" type="url"' in admin_page, "External link field must be a URL input."
+assert 'if (parsedUrl.protocol !== "https:")' in admin, "Admin must reject non-HTTPS external links."
+assert 'content_type: "link"' in admin and 'external_url: externalUrl' in admin, "External links must be saved to the content table."
+assert 'external.rel = "_blank"' not in admin, "External links must not use a scriptable URL target."
 assert 'if page.name == "admin.html"' not in build, "Build should include the RLS-protected admin route."
 assert "|admin|" in auth, "Login must support the published admin route."
 for env in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "LLM_PROVIDER"):

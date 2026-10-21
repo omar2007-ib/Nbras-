@@ -8,6 +8,20 @@
   const empty = $("#empty");
   const submit = form?.querySelector('button[type="submit"]');
   const MAX_FILE_SIZE = 50 * 1024 * 1024;
+  const typeSelect = $("#content-form select[name=\"type\"]");
+  const externalUrlField = $("#external-url-field");
+  const fileUploadField = $("#file-upload-field");
+  const externalUrlInput = $("#content-form input[name=\"external_url\"]");
+  function syncResourceFields() {
+    const isLink = typeSelect?.value === "link";
+    if (externalUrlField) externalUrlField.style.display = isLink ? "block" : "none";
+    if (fileUploadField) fileUploadField.hidden = isLink;
+    if (externalUrlInput) externalUrlInput.required = Boolean(isLink);
+    const fileInput = $("#files");
+    if (fileInput) fileInput.required = !isLink;
+  }
+  typeSelect?.addEventListener("change", syncResourceFields);
+  syncResourceFields();
   const MIME = {
     pdf: ["application/pdf"],
     video: ["video/mp4", "video/webm"],
@@ -103,6 +117,18 @@
         preview.textContent = row.content_type === "video" ? "مشاهدة" : "فتح الملف";
         preview.addEventListener("click", () => previewFile(row, preview));
         actions.append(preview);
+      } else if (row.external_url) {
+        const external = document.createElement("a");
+        try {
+          const url = new URL(row.external_url);
+          if (url.protocol !== "https:") throw new Error("protocol");
+          external.href = url.toString();
+          external.target = "_blank";
+          external.rel = "noopener noreferrer";
+          external.className = "btn small-btn";
+          external.textContent = "فتح الرابط";
+          actions.append(external);
+        } catch (_) { say("الرابط المخزن غير صالح أو غير آمن.", true); }
       }
       const publish = document.createElement("button");
       publish.type = "button"; publish.className = "btn small-btn";
@@ -126,8 +152,14 @@
     const kind = String(data.get("type") || "lesson");
     const course = data.get("course") === "تدريبات" ? "tadreebat" : "tasees";
     const description = String(data.get("description") || "").trim();
+    const externalUrl = String(data.get("external_url") || "").trim();
     if (!title) return say("اكتب عنوان المحتوى أولاً.", true);
-    if (!files.length && kind !== "link") return say("اختر ملفاً أو أكثر لرفعه. الروابط الخارجية ستُضاف في خطوة لاحقة.", true);
+    if (kind === "link") {
+      let parsedUrl;
+      try { parsedUrl = new URL(externalUrl); } catch (_) { return say("اكتب رابطًا صحيحًا يبدأ بـ https://.", true); }
+      if (parsedUrl.protocol !== "https:") return say("لأمان الطلاب، يجب أن يبدأ الرابط بـ https://.", true);
+      if (files.length) return say("أزل الملفات المختارة قبل إضافة رابط خارجي.", true);
+    } else if (!files.length) return say("اختر ملفًا أو أكثر لرفعه.", true);
     if (files.some(file => file.size > MAX_FILE_SIZE)) return say("حجم كل ملف يجب ألا يتجاوز 50 ميجابايت في إعداد التخزين الحالي.", true);
     if (files.some(file => !allowedFile(file, kind))) return say("نوع الملف لا يطابق التصنيف المختار. اختر فيديو لـ MP4/WebM أو PDF أو ورقة تدريب للملفات والصور المناسبة.", true);
     if (files.length > 20) return say("يمكن رفع 20 ملفًا كحد أقصى في العملية الواحدة.", true);
@@ -137,7 +169,18 @@
     let uploaded = 0;
     let failedFile = "";
     try {
-      if (!files.length) throw new Error("لا يوجد ملف محدد.");
+      if (kind === "link") {
+        const { error } = await client.from("course_content").insert({
+          course_slug: course, title, description, content_type: "link",
+          storage_path: null, external_url: externalUrl,
+          is_published: data.get("is_published") === "on", created_by: user.id
+        });
+        if (error) throw error;
+        form.reset();
+        syncResourceFields();
+        await loadContent();
+        return say("تمت إضافة الرابط الخارجي " + (data.get("is_published") === "on" ? "ونشره" : "وحفظه كمسودة") + " بنجاح.");
+      }
       for (const [index, file] of files.entries()) {
         const safeName = file.name.normalize("NFKC").replace(/[^\p{L}\p{N}._-]+/gu, "-").slice(-100) || "file";
         const path = course + "/" + user.id + "/" + crypto.randomUUID() + "-" + safeName;
