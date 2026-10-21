@@ -35,6 +35,11 @@ assert 'name="external_url" type="url"' in admin_page, "External link field must
 assert 'if (parsedUrl.protocol !== "https:")' in admin, "Admin must reject non-HTTPS external links."
 assert 'content_type: "link"' in admin and 'external_url: externalUrl' in admin, "External links must be saved to the content table."
 assert 'external.rel = "noopener noreferrer"' in admin, "External links must prevent opener access."
+preview = admin[admin.index("async function previewFile"):admin.index("async function setPublished")]
+assert 'window.open("about:blank", "_blank")' in preview, "Admin preview must open a tab synchronously to avoid popup blockers."
+assert preview.index('window.open("about:blank", "_blank")') < preview.index("await client.storage"), "Preview tab must open before the asynchronous signed-URL request."
+assert "previewWindow.opener = null" in preview and "previewWindow.location.replace(data.signedUrl)" in preview, "Preview must isolate the new tab and navigate it to the signed URL."
+assert "previewWindow.close()" in preview, "Failed preview requests must close the temporary blank tab."
 assert 'if page.name == "admin.html"' not in build, "Build should include the RLS-protected admin route."
 assert "|admin|" in auth, "Login must support the published admin route."
 for env in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "LLM_PROVIDER"):

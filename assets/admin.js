@@ -231,13 +231,23 @@
   }
   async function previewFile(row, button) {
     button.disabled = true;
+    let previewWindow = null;
     try {
+      // Open the tab synchronously from the user's click so popup blockers do not
+      // discard it after the asynchronous signed-URL request completes.
+      previewWindow = window.open("about:blank", "_blank");
+      if (!previewWindow) {
+        throw new Error("اسمح بفتح النوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.");
+      }
+      previewWindow.opener = null;
+      previewWindow.document.title = "جارٍ تجهيز معاينة أثَر…";
       const { data, error } = await client.storage.from("athar-content").createSignedUrl(row.storage_path, 300, { download: false });
       if (error) throw error;
       if (!data?.signedUrl) throw new Error("لم يتم إنشاء رابط معاينة آمن.");
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      previewWindow.location.replace(data.signedUrl);
       say("تم إنشاء رابط معاينة مؤقت صالح لمدة 5 دقائق.");
     } catch (error) {
+      if (previewWindow && !previewWindow.closed) previewWindow.close();
       say("تعذرت معاينة الملف: " + (error?.message || "خطأ غير معروف"), true);
     } finally { button.disabled = false; }
   }
