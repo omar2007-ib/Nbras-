@@ -35,6 +35,10 @@ if mcq_path.exists():
             "New questions must be inserted into the authenticated Supabase bank.")
     require("تعذّر حفظ السؤال في قاعدة البيانات:" in mcq,
             "Question creation must show database errors without claiming success.")
+    for category in ("كمي", "لفظي", "عام"):
+        require(mcq.count(f"<option>{category}</option>") >= 2,
+                f"MCQ builder must support the {category} category in creation and AI generation.")
+    require("كل التصنيفات" in mcq, "MCQ bank filter must include all categories.")
     require("ctx.client.from('mcq_questions').delete().eq('id',q.id)" in mcq,
             "Deleting a question must remove it from the cloud bank, not only the local cache.")
     require("تم الحذف من قاعدة البيانات، لكن تعذّر تحديث النسخة المحلية." in mcq,
@@ -79,22 +83,40 @@ class QuizParser(HTMLParser):
 if exam_path.exists():
     exam = exam_path.read_text(encoding="utf-8")
     for label, token in {
-        "timed exam reads the MCQ bank": "athar-mcq-questions-v1",
+        "server-backed MCQ exam start": "start_mcq_exam",
+        "server-side answer submission and grading": "submit_mcq_exam",
         "timer countdown": "setInterval",
         "automatic submit on timeout": "finish(true)",
         "manual submit confirmation": "هل تريد تسليم الاختبار الآن؟",
-        "result percentage": "Math.round(score/active.length*100)",
-        "local-only data disclosure": "ولا تُرسل إلى خادم",
-        "unbiased Fisher-Yates question shuffle": "function shuffle(items)",
-        "shuffle used when starting an exam": "active=shuffle(pool)",
+        "server result percentage": "data.percent",
+        "no answer key requested before submission": "correct_index" not in exam.split("async function begin()", 1)[1].split("async function finish", 1)[0],
+        "no local MCQ answer bank used by exam": "athar-mcq-questions-v1" not in exam,
         "local attempt-history key": "athar-exam-history-v1",
         "bounded local attempt history": "MAX_HISTORY=10",
         "attempt history saved after submission": "saveAttempt({date:new Date().toISOString()",
         "answer review visible in results": "مراجعة الإجابات",
         "elapsed-time summary": "الوقت المستغرق:",
+        "safe Supabase client setup": "window.supabase.createClient(config.url,config.publishableKey)",
+        "retryable submission error state": "إعادة محاولة التسليم",
     }.items():
-        require(token in exam, f"Timed exam missing {label}.")
+        require((token in exam) if isinstance(token, str) else token, f"Timed exam missing {label}.")
     require('href="exam.html"' in mcq, "MCQ builder must link to timed exam mode.")
+
+migration_path = ROOT / "supabase/migrations/20261021160000_secure_mcq_exam_flow.sql"
+require(migration_path.exists(), "Secure MCQ exam migration is missing.")
+if migration_path.exists():
+    migration = migration_path.read_text(encoding="utf-8")
+    start_fn = migration.split("create or replace function public.start_mcq_exam", 1)[-1].split("create or replace function public.submit_mcq_exam", 1)[0]
+    require("revoke all privileges on table public.mcq_questions from anon" in migration,
+            "Anonymous users must not have direct read access to the answer-key table.")
+    require("revoke all on table public.mcq_exam_attempts from public, anon, authenticated" in migration,
+            "Exam attempt records must not be directly readable by clients.")
+    require("correct_index" not in start_fn and "explanation" not in start_fn,
+            "Starting an exam must not return answer keys or explanations before submission.")
+    require("grant execute on function public.start_mcq_exam(text,integer) to anon,authenticated" in migration,
+            "Public exam-start RPC must be executable by student clients.")
+    require("grant execute on function public.submit_mcq_exam(uuid,jsonb) to anon,authenticated" in migration,
+            "Exam submission RPC must be executable by student clients.")
 
 quiz_count = 0
 if practice_path.exists():

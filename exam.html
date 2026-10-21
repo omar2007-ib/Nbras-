@@ -17,13 +17,13 @@
 <body>
 <header><a class="logo" href="index.html">أثَر</a><nav aria-label="القائمة الرئيسية"><a href="index.html">الرئيسية</a><a href="courses.html">الدورات</a><a href="practice.html">التدريب</a><a href="mcq-builder.html">صانع الأسئلة</a></nav></header>
 <main class="wrap section exam-shell">
-<section class="hero" style="border-radius:20px;padding:26px;margin-bottom:20px"><span class="badge">تدريب بوقت محدد</span><h1>اختبر نفسك بتركيز.</h1><p>اختر مدة الاختبار، ثم أجب عن الأسئلة الموجودة في بنك الأسئلة المحفوظ على هذا المتصفح.</p></section>
+<section class="hero" style="border-radius:20px;padding:26px;margin-bottom:20px"><span class="badge">تدريب بوقت محدد</span><h1>اختبر نفسك بتركيز.</h1><p>اختر مدة الاختبار والتصنيف، ثم أجب عن الأسئلة المعتمدة في بنك أثَر. تُصحّح الإجابات على الخادم بعد التسليم.</p></section>
 <section id="setup" class="card">
 <h2>إعداد الاختبار</h2>
 <p id="bank-info" class="muted">جارٍ قراءة بنك الأسئلة…</p>
 <div class="field"><label for="duration">مدة الاختبار</label><select id="duration"><option value="15">15 دقيقة</option><option value="30">30 دقيقة</option><option value="60" selected>60 دقيقة</option></select></div>
 <div class="field"><label for="category">نوع الأسئلة</label><select id="category"><option value="">كل التصنيفات</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
-<p class="notice">ملاحظة: بنك الأسئلة الحالي محلي على هذا الجهاز. لن تظهر أسئلة أنشأها شخص آخر حتى يتم توفير قاعدة بيانات ومزامنة فعلية.</p>
+<p class="notice">تُحمّل الأسئلة المعتمدة من قاعدة البيانات. لا تُرسل الإجابات الصحيحة إلى جهازك أثناء الاختبار، ويُحسب التقييم على الخادم بعد التسليم.</p>
 <div class="exam-actions"><button id="start" class="btn" type="button">ابدأ الاختبار</button><a class="btn secondary" href="mcq-builder.html">إدارة بنك الأسئلة</a></div>
 <p id="setup-status" role="status" aria-live="polite"></p>
 </section>
@@ -36,58 +36,59 @@
 <section id="results" class="card hidden" aria-live="polite"></section>
 </main>
 <footer><strong>أثَر</strong><br>كل خطوة تعلّم تقرّبك من هدفك.</footer>
+<script src="assets/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
 'use strict';
-const KEY='athar-mcq-questions-v1';
-const HISTORY_KEY='athar-exam-history-v1';
-const MAX_HISTORY=10;
+const HISTORY_KEY='athar-exam-history-v1',MAX_HISTORY=10;
 const $=id=>document.getElementById(id);
 const setup=$('setup'),test=$('test'),results=$('results'),start=$('start'),list=$('question-list'),form=$('test-form'),timer=$('timer');
-let bank=[],active=[],remaining=0,clock=null,finished=false,startedAt=0,initialSeconds=0;
-function valid(q){return q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string')&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4&&typeof q.category==='string'&&typeof q.difficulty==='string'}
-function load(){try{const raw=JSON.parse(localStorage.getItem(KEY)||'[]');bank=Array.isArray(raw)?raw.filter(valid):[]}catch(e){bank=[]}$('bank-info').textContent='عدد الأسئلة الصالحة في هذا المتصفح: '+bank.length+' سؤال.';start.disabled=bank.length===0;renderHistory()}
-function readHistory(){try{const value=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(value)?value.filter(x=>x&&typeof x.date==='string'&&Number.isFinite(x.percent)&&Number.isInteger(x.score)&&Number.isInteger(x.total)).slice(0,MAX_HISTORY):[]}catch(e){return []}}
-function renderHistory(){let section=$('history');if(!section){section=document.createElement('section');section.id='history';section.className='card';section.innerHTML='<h2>محاولاتك الأخيرة على هذا الجهاز</h2><p class="muted" id="history-note"></p><ol id="history-list"></ol>';setup.after(section)}const items=readHistory(),list=$('history-list');list.replaceChildren();$('history-note').textContent=items.length?'يُحفظ آخر '+items.length+' محاولات محليًا على هذا المتصفح.':'لا توجد محاولات محفوظة حتى الآن.';items.forEach(item=>{const li=document.createElement('li');const date=new Date(item.date);const stamp=Number.isNaN(date.getTime())?item.date:date.toLocaleString('ar-SA');li.textContent=stamp+' — '+item.score+'/'+item.total+' ('+item.percent+'٪)'+(item.auto?' — انتهى الوقت':'');list.append(li)})}
+const config=window.ATHAR_SUPABASE_CONFIG||{};
+let client=null,active=[],remaining=0,clock=null,finished=false,finishing=false,startedAt=0,initialSeconds=0,attemptId=null,lastAuto=false;
+const labels=['أ','ب','ج','د'];
+function readHistory(){try{const v=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(v)?v.filter(x=>x&&typeof x.date==='string'&&Number.isFinite(x.percent)&&Number.isInteger(x.score)&&Number.isInteger(x.total)).slice(0,MAX_HISTORY):[]}catch(e){return []}}
+function renderHistory(){let section=$('history');if(!section){section=document.createElement('section');section.id='history';section.className='card';section.innerHTML='<h2>محاولاتك الأخيرة على هذا الجهاز</h2><p class="muted" id="history-note"></p><ol id="history-list"></ol>';setup.after(section)}const items=readHistory(),historyList=$('history-list');historyList.replaceChildren();$('history-note').textContent=items.length?'يُحفظ آخر '+items.length+' محاولات محليًا على هذا المتصفح.':'لا توجد محاولات محفوظة حتى الآن.';items.forEach(item=>{const li=document.createElement('li'),date=new Date(item.date);li.textContent=(Number.isNaN(date.getTime())?item.date:date.toLocaleString('ar-SA'))+' — '+item.score+'/'+item.total+' ('+item.percent+'٪)'+(item.auto?' — انتهى الوقت':'');historyList.append(li)})}
 function saveAttempt(record){try{const items=readHistory();items.unshift(record);localStorage.setItem(HISTORY_KEY,JSON.stringify(items.slice(0,MAX_HISTORY)));return true}catch(e){return false}}
-function shuffle(items){const result=items.slice();for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]]}return result}
 function formatTime(n){return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')}
 function renderTimer(){timer.textContent=formatTime(remaining);timer.classList.toggle('warning',remaining<=300)}
-function renderQuestions(){
-list.replaceChildren();const labels=['أ','ب','ج','د'];
-active.forEach((q,index)=>{
-const field=document.createElement('fieldset');field.className='exam-question';
-const legend=document.createElement('legend');legend.textContent=(index+1)+'. '+q.question;field.append(legend);
-q.options.forEach((option,i)=>{const label=document.createElement('label');label.className='exam-option';const input=document.createElement('input');input.type='radio';input.name='question-'+index;input.value=String(i);input.setAttribute('aria-label','الخيار '+labels[i]);const text=document.createElement('span');text.textContent=labels[i]+' — '+option;label.append(input,text);field.append(label)});
-list.append(field)
-});
-updateProgress()
-}
+function saySetup(message,bad=false){$('setup-status').textContent=message;$('setup-status').setAttribute('role',bad?'alert':'status')}
+function renderQuestions(){list.replaceChildren();active.forEach((q,index)=>{const field=document.createElement('fieldset');field.className='exam-question';const legend=document.createElement('legend');legend.textContent=(index+1)+'. '+q.question;field.append(legend);q.options.forEach((option,i)=>{const label=document.createElement('label');label.className='exam-option';const input=document.createElement('input');input.type='radio';input.name='question-'+index;input.value=String(i);input.setAttribute('aria-label','الخيار '+labels[i]);const text=document.createElement('span');text.textContent=labels[i]+' — '+option;label.append(input,text);field.append(label)});list.append(field)});updateProgress()}
 function updateProgress(){const answered=active.filter((q,i)=>form.querySelector('input[name="question-'+i+'"]:checked')).length;$('test-progress').textContent='تمت الإجابة عن '+answered+' من '+active.length+' أسئلة.';$('progress-fill').style.width=(active.length?answered/active.length*100:0)+'%'}
-function finish(auto){
-if(finished)return;finished=true;if(clock)clearInterval(clock);clock=null;
-const fields=Array.from(list.querySelectorAll('fieldset'));let score=0,answered=0;
-fields.forEach((field,index)=>{const q=active[index],chosen=form.querySelector('input[name="question-'+index+'"]:checked');if(chosen)answered++;const correct=!!chosen&&Number(chosen.value)===q.correct;if(correct)score++;field.querySelectorAll('input').forEach(input=>input.disabled=true);const feedback=document.createElement('p');feedback.className='muted';feedback.textContent=(correct?'إجابة صحيحة. ':chosen?'إجابة غير صحيحة. ':'لم تتم الإجابة. ')+'الإجابة الصحيحة: '+['أ','ب','ج','د'][q.correct]+' — '+q.options[q.correct]+(q.explanation?' | الشرح: '+q.explanation:'');field.append(feedback)});
-test.classList.add('hidden');results.classList.remove('hidden');results.replaceChildren();
+function renderResults(data,auto){
+finished=true;finishing=false;test.classList.add('hidden');results.classList.remove('hidden');results.replaceChildren();
 const heading=document.createElement('h2');heading.textContent=auto?'انتهى الوقت وتم تسليم الاختبار':'تم تسليم الاختبار';
-const scoreLine=document.createElement('p');scoreLine.textContent='نتيجتك: '+score+' من '+active.length+' ('+Math.round(score/active.length*100)+'٪).';
-const details=document.createElement('p');details.textContent='أجبت عن '+answered+' سؤالًا، وتركت '+(active.length-answered)+' دون إجابة.';
-const elapsed=Math.max(0,Math.floor((Date.now()-startedAt)/1000));const durationLine=document.createElement('p');durationLine.textContent='الوقت المستغرق: '+formatTime(Math.min(elapsed,initialSeconds))+'.';
-const note=document.createElement('p');note.className='muted';note.textContent='النتيجة للمتابعة الشخصية في هذا الاختبار فقط، ولا تُرسل إلى خادم.';
-const saved=saveAttempt({date:new Date().toISOString(),score,total:active.length,percent:Math.round(score/active.length*100),answered,auto:!!auto,duration:Math.min(elapsed,initialSeconds)});if(!saved)note.textContent+=' تعذّر حفظ المحاولة في سجل المتصفح، لكن نتيجتك الحالية ظاهرة.';
-const review=document.createElement('div');review.className='exam-review';const reviewTitle=document.createElement('h3');reviewTitle.textContent='مراجعة الإجابات';review.append(reviewTitle);fields.forEach(field=>review.append(field));
-const actions=document.createElement('div');actions.className='exam-actions';const again=document.createElement('button');again.className='btn';again.textContent='اختبار جديد';again.addEventListener('click',()=>{results.classList.add('hidden');setup.classList.remove('hidden');load()});const practice=document.createElement('a');practice.className='btn secondary';practice.href='mcq-builder.html';practice.textContent='مراجعة بنك الأسئلة';actions.append(again,practice);results.append(heading,scoreLine,details,durationLine,note,review,actions);renderHistory();
+const scoreLine=document.createElement('p');scoreLine.textContent='نتيجتك: '+data.score+' من '+data.total+' ('+data.percent+'٪).';
+const elapsed=Math.max(0,Math.floor((Date.now()-startedAt)/1000)),duration=Math.min(elapsed,initialSeconds);
+const durationLine=document.createElement('p');durationLine.textContent='الوقت المستغرق: '+formatTime(duration)+'.';
+const note=document.createElement('p');note.className='muted';note.textContent='تم تصحيح الإجابات على الخادم؛ لم تُرسل الإجابات الصحيحة إلى المتصفح قبل التسليم.';
+const saved=saveAttempt({date:new Date().toISOString(),score:data.score,total:data.total,percent:data.percent,auto:!!auto,duration});if(!saved)note.textContent+=' تعذّر حفظ المحاولة في سجل المتصفح.';
+const review=document.createElement('div');review.className='exam-review';const reviewTitle=document.createElement('h3');reviewTitle.textContent='مراجعة الإجابات';review.append(reviewTitle);
+(data.details||[]).forEach((q,index)=>{const field=document.createElement('fieldset');field.className='exam-question';const legend=document.createElement('legend');legend.textContent=(index+1)+'. '+q.question;field.append(legend);q.options.forEach((option,i)=>{const row=document.createElement('p');row.className='exam-option';row.textContent=labels[i]+' — '+option+(i===q.correct_index?' ✓ (الإجابة الصحيحة)':'')+(i===q.selected?' — إجابتك':'');field.append(row)});const feedback=document.createElement('p');feedback.className='muted';feedback.textContent=(q.selected===q.correct_index?'إجابة صحيحة. ':q.selected===null?'لم تتم الإجابة. ':'إجابة غير صحيحة. ')+(q.explanation?'الشرح: '+q.explanation:'');field.append(feedback);review.append(field)});
+const actions=document.createElement('div');actions.className='exam-actions';const again=document.createElement('button');again.className='btn';again.textContent='اختبار جديد';again.addEventListener('click',()=>{results.classList.add('hidden');setup.classList.remove('hidden');start.disabled=false;saySetup('')});const builder=document.createElement('a');builder.className='btn secondary';builder.href='mcq-builder.html';builder.textContent='مراجعة بنك الأسئلة';actions.append(again,builder);results.append(heading,scoreLine,durationLine,note,review,actions);renderHistory()
 }
-start.addEventListener('click',()=>{
-load();const category=$('category').value;const pool=bank.filter(q=>!category||q.category===category);
-if(!pool.length){$('setup-status').textContent='لا توجد أسئلة في هذا التصنيف. أضف أسئلة أو اختر تصنيفًا آخر.';return}
-active=shuffle(pool);remaining=Number($('duration').value)*60;initialSeconds=remaining;startedAt=Date.now();finished=false;$('setup-status').textContent='';setup.classList.add('hidden');results.classList.add('hidden');test.classList.remove('hidden');renderQuestions();renderTimer();
-clock=setInterval(()=>{remaining--;renderTimer();if(remaining<=0)finish(true)},1000);
-});
+async function finish(auto){
+if(finished||finishing)return;finishing=true;lastAuto=!!auto;if(clock)clearInterval(clock);clock=null;
+const submit=form.querySelector('button[type="submit"]');submit.disabled=true;submit.textContent='جارٍ تصحيح الاختبار بأمان…';
+const answers=active.map((q,i)=>{const chosen=form.querySelector('input[name="question-'+i+'"]:checked');return chosen?{id:q.id,selected:Number(chosen.value)}:null}).filter(Boolean);
+try{const {data,error}=await client.rpc('submit_mcq_exam',{p_attempt_id:attemptId,p_answers:answers});if(error)throw error;if(!data||!Array.isArray(data.details)||!Number.isInteger(data.score)||!Number.isInteger(data.total))throw new Error('استجابة التصحيح غير مكتملة.');renderResults(data,lastAuto)}
+catch(error){finishing=false;submit.disabled=false;submit.textContent='إعادة محاولة التسليم';let msg=$('submit-error');if(!msg){msg=document.createElement('p');msg.id='submit-error';msg.className='notice';msg.setAttribute('role','alert');form.after(msg)}msg.textContent='تعذّر تأكيد النتيجة من الخادم. لم نعرض نتيجة غير مؤكدة؛ اضغط إعادة محاولة التسليم. '+(error.message||'تحقق من الاتصال.')}
+}
+async function begin(){
+if(!client){saySetup('تعذر الاتصال بخدمة الاختبارات. أعد تحميل الصفحة بعد التحقق من الاتصال.',true);return}
+start.disabled=true;saySetup('جارٍ تحميل الأسئلة المعتمدة من بنك أثَر الآمن…');
+try{const category=$('category').value||null;const {data,error}=await client.rpc('start_mcq_exam',{p_category:category,p_limit:50});if(error)throw error;const payload=typeof data==='string'?JSON.parse(data):data;active=Array.isArray(payload?.questions)?payload.questions:[];attemptId=payload?.attempt_id||null;if(!attemptId||!active.length){saySetup('لا توجد أسئلة معتمدة في هذا التصنيف حاليًا. جرّب تصنيفًا آخر أو عد لاحقًا.');start.disabled=false;return}
+if(!active.every(q=>q&&typeof q.id==='string'&&typeof q.question==='string'&&Array.isArray(q.options)&&q.options.length===4)){throw new Error('تعذر التحقق من بنية بنك الأسئلة.')}
+remaining=Number($('duration').value)*60;initialSeconds=remaining;startedAt=Date.now();finished=false;finishing=false;setup.classList.add('hidden');results.classList.add('hidden');test.classList.remove('hidden');renderQuestions();renderTimer();const errorBox=$('submit-error');if(errorBox)errorBox.remove();const submit=form.querySelector('button[type="submit"]');submit.disabled=false;submit.textContent='إنهاء وتسليم الاختبار';
+clock=setInterval(()=>{remaining--;renderTimer();if(remaining<=0)finish(true)},1000)
+}catch(error){saySetup('تعذر بدء الاختبار من قاعدة البيانات. '+(error.message||'تحقق من الاتصال والصلاحيات.'),true);start.disabled=false}
+}
 form.addEventListener('change',e=>{if(e.target.matches('input[type="radio"]'))updateProgress()});
 form.addEventListener('submit',e=>{e.preventDefault();if(confirm('هل تريد تسليم الاختبار الآن؟'))finish(false)});
-$('cancel').addEventListener('click',()=>{if(confirm('سيتم إلغاء الاختبار الحالي دون حفظ النتيجة. هل تريد المتابعة؟')){if(clock)clearInterval(clock);clock=null;finished=true;test.classList.add('hidden');setup.classList.remove('hidden')}});
-load();
+$('cancel').addEventListener('click',()=>{if(confirm('سيتم إلغاء الاختبار الحالي دون حفظ النتيجة. هل تريد المتابعة؟')){if(clock)clearInterval(clock);clock=null;finished=true;test.classList.add('hidden');setup.classList.remove('hidden');start.disabled=false}});
+start.addEventListener('click',begin);
+if(config.url&&config.publishableKey&&window.supabase?.createClient){client=window.supabase.createClient(config.url,config.publishableKey);$('bank-info').textContent='الأسئلة المعتمدة تُحمّل مباشرة من بنك أثَر؛ الإجابات الصحيحة تبقى على الخادم حتى التسليم.';start.disabled=false}else{$('bank-info').textContent='تعذر تهيئة خدمة الاختبارات.';start.disabled=true;saySetup('تعذر تحميل إعدادات الاتصال أو مكتبة قاعدة البيانات.',true)}
+renderHistory()
 })();
 </script>
 

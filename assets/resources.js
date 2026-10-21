@@ -33,7 +33,20 @@
     }
     const items = data || [];
     if (!items.length) {
-      say("لا توجد ملفات أو مقاطع منشورة حتى الآن. ستظهر المواد هنا بعد اعتمادها من إدارة أثَر.");
+      say("لا توجد ملفات أو مقاطع منشورة حتى الآن. يمكنك متابعة التعلّم من الدورات والتدريب إلى أن تنشر الإدارة مواد المكتبة.");
+      const empty = node("article", undefined, "card empty-resource-state");
+      empty.append(
+        node("h2", "المكتبة تستعد لاستقبال موادك التعليمية"),
+        node("p", "لم تُنشر ملفات أو روابط تعليمية بعد. هذه ليست مشكلة اتصال؛ قاعدة البيانات تعمل، لكن لا توجد مواد منشورة حاليًا.")
+      );
+      const actions = node("div", undefined, "resource-empty-actions");
+      const courses = node("a", "استكشف الدورات", "btn");
+      courses.href = "courses.html";
+      const practice = node("a", "ابدأ التدريب", "btn secondary");
+      practice.href = "practice.html";
+      actions.append(courses, practice);
+      empty.append(actions);
+      root.append(empty);
       return;
     }
     let ready = 0;

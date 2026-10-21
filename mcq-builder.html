@@ -31,7 +31,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="choices">
 <div class="field"><label for="source-pdf">ملف PDF</label><input id="source-pdf" type="file" accept="application/pdf,.pdf"></div>
 <div class="field"><label for="ai-count">عدد الأسئلة</label><input id="ai-count" type="number" min="1" max="30" value="5"></div>
-<div class="field"><label for="ai-category">القسم</label><select id="ai-category"><option>كمي</option></select></div>
+<div class="field"><label for="ai-category">القسم</label><select id="ai-category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
 <div class="field"><label for="ai-difficulty">الصعوبة</label><select id="ai-difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option><option>متدرج</option></select></div>
 <div class="field"><label for="ai-mode">طريقة الإنشاء</label><select id="ai-mode"><option value="generate">إنشاء أسئلة جديدة من المصدر</option><option value="extract">استخراج الأسئلة الموجودة في المصدر</option></select></div>
 </div>
@@ -53,7 +53,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 </div>
 <div class="field"><label for="correct">الإجابة الصحيحة</label><select id="correct"><option value="0">أ — الخيار الأول</option><option value="1">ب — الخيار الثاني</option><option value="2">ج — الخيار الثالث</option><option value="3">د — الخيار الرابع</option></select></div>
 <div class="choices">
-<div class="field"><label for="category">التصنيف</label><select id="category"><option>كمي</option></select></div>
+<div class="field"><label for="category">التصنيف</label><select id="category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
 <div class="field"><label for="difficulty">مستوى الصعوبة</label><select id="difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option></select></div>
 </div>
 <div class="field"><label for="explanation">شرح الإجابة (اختياري)</label><textarea id="explanation" maxlength="1500" placeholder="اكتب طريقة الحل أو سبب صحة الإجابة..."></textarea></div>
@@ -67,7 +67,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="stats"><span class="stat">عدد الأسئلة: <strong id="count">0</strong></span><span class="stat">تخزين محلي</span></div>
 <div class="field"><label for="search">البحث في الأسئلة</label><input id="search" type="search" placeholder="ابحث بكلمة من السؤال..."></div>
 <div class="choices">
-<div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">كل أسئلة الكمي</option><option>كمي</option></select></div>
+<div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">كل التصنيفات</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
 <div class="field"><label for="filter-difficulty">الصعوبة</label><select id="filter-difficulty"><option value="">الكل</option><option>سهل</option><option>متوسط</option><option>صعب</option></select></div>
 </div>
 <div class="actions" style="margin:0 0 15px"><a class="btn" href="exam.html" style="text-decoration:none">ابدأ اختبارًا مؤقتًا</a><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><label class="sr-only" for="import-file">اختر ملف أسئلة JSON للاستيراد</label><input class="hidden" id="import-file" aria-label="اختر ملف أسئلة JSON للاستيراد" type="file" accept=".json,application/json"><button class="btn danger" id="clear-all" type="button">إعادة تحميل بنك السحابة</button></div>
