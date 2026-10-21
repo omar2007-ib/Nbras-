@@ -49,12 +49,29 @@ Deno.serve(async (req: Request) => {
 
   let rawBody: string;
   try {
-    rawBody = await req.text();
+    const reader = req.body?.getReader();
+    if (!reader) return reply({ error: "الطلب فارغ أو غير صالح." }, 400, origin);
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_BODY_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        return reply({ error: "حجم الطلب أكبر من المسموح." }, 413, origin);
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    rawBody = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
-    return reply({ error: "تعذّر قراءة الطلب." }, 400, origin);
-  }
-  if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
-    return reply({ error: "حجم الطلب أكبر من المسموح." }, 413, origin);
+    return reply({ error: "تعذّر قراءة الطلب أو ترميزه." }, 400, origin);
   }
 
   let body: {
