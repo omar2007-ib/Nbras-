@@ -173,7 +173,7 @@ async function readPdf(){
  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;const parts=[];
  for(let i=1;i<=Math.min(pdf.numPages,100);i++){const page=await pdf.getPage(i),content=await page.getTextContent();parts.push(content.items.map(x=>x.str||'').join(' '))}
- const text=parts.join('\\n').trim();if(text.length<80)throw new Error('لم يُستخرج نص كافٍ؛ قد يكون PDF ممسوحًا كصور ويحتاج OCR.');
+ const text=parts.join('\n').trim();if(text.length<80)throw new Error('لم يُستخرج نص كافٍ؛ قد يكون PDF ممسوحًا كصور ويحتاج OCR.');
  textInput.value=text.slice(0,30000);return {pages:pdf.numPages,chars:text.length};
 }
 extract.addEventListener('click',async()=>{extract.disabled=true;say('جارٍ استخراج النص من PDF...');try{const r=await readPdf();say('تم استخراج النص من '+Math.min(r.pages,100)+' صفحة. اضغط توليد الأسئلة.')}catch(e){say(e.message||'تعذرت قراءة PDF.',true)}finally{extract.disabled=false}});
