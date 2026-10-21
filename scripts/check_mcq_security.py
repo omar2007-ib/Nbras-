@@ -7,6 +7,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 BASE_MIGRATION = ROOT / "supabase" / "migrations" / "20261021180000_protect_mcq_answer_keys.sql"
 VIEW_MIGRATION = ROOT / "supabase" / "migrations" / "20261021182000_make_mcq_public_view_invoker_safe.sql"
+ACCESS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021183000_grant_safe_mcq_public_view_reads.sql"
 
 
 def compact_sql(path: Path) -> str:
@@ -15,7 +16,7 @@ def compact_sql(path: Path) -> str:
 
 def main() -> int:
     errors = []
-    for path in (BASE_MIGRATION, VIEW_MIGRATION):
+    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION):
         if not path.is_file():
             errors.append(f"Missing security migration: {path.relative_to(ROOT)}")
     if errors:
@@ -25,6 +26,7 @@ def main() -> int:
 
     base = compact_sql(BASE_MIGRATION)
     view = compact_sql(VIEW_MIGRATION)
+    access = compact_sql(ACCESS_MIGRATION)
 
     if "revoke select on table public.mcq_questions from anon, public" not in base:
         errors.append("Anonymous/PUBLIC roles must not have table-level SELECT.")
@@ -46,8 +48,10 @@ def main() -> int:
         errors.append("Answer-free public view must expose approved questions only.")
     elif "correct_index" in view_match.group(1):
         errors.append("Public MCQ view must never expose correct_index.")
-    if "grant select on table public.mcq_public_questions to anon, authenticated" not in base:
-        errors.append("Public view must be readable by learning clients.")
+    if "grant select on table public.mcq_public_questions to anon, authenticated" not in access:
+        errors.append("The safe public view must be readable by learning clients.")
+    if "revoke insert, update, delete on table public.mcq_public_questions from anon, authenticated, public" not in access:
+        errors.append("Public view access must remain read-only.")
 
     if errors:
         for error in errors:
