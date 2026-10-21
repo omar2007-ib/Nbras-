@@ -1,56 +1,38 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#FFF5F5">
-  <link rel="icon" type="image/svg+xml" href="assets/athar-mark.svg">
-  <meta name="robots" content="noindex,nofollow">
-  <title>تسجيل الدخول | أثَر</title>
-  <meta name="description" content="تسجيل الدخول إلى أثَر. يتطلب الدخول الفعلي إعداد خدمة المصادقة قبل الإطلاق.">
-  <link rel="stylesheet" href="assets/style.css">
-  <style>
-    body{background:linear-gradient(135deg,#fff8f8 0%,#fff5f5 48%,#f7efe8 100%);min-height:100vh}
-    .auth-wrap{max-width:520px;margin:clamp(28px,8vh,76px) auto;padding:24px}
-    .auth-card{position:relative;overflow:hidden}
-    .auth-card:before{content:"";display:block;width:70px;height:5px;border-radius:20px;background:#d4af37;margin-bottom:22px}
-    .brand-mark{display:inline-flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:16px;background:#e8b4b8;color:#2d3436;font-size:1.7rem;font-weight:900;margin-bottom:12px}
-    .auth-card h1{font-size:clamp(1.7rem,5vw,2.2rem);margin:8px 0}
-    .auth-card button{background:#e8b4b8;color:#2d3436;border:0;border-radius:12px;padding:13px;font-weight:800}
-    .auth-card input:focus{outline:3px solid #d4af3766;border-color:#b28d21}
-    .security-note{background:#fff8e5;border:1px solid #ead9a5;border-radius:12px;padding:12px;margin:16px 0;font-size:.9rem}
-    .auth-card a{color:#5c4b16}
-    .auth-card{background:#fff;border:1px solid #e6e2d9;border-radius:22px;padding:28px;box-shadow:0 16px 44px #15243b12}
-    .auth-card label{display:block;margin:18px 0 8px;font-weight:700}
-    .auth-card input{width:100%;padding:13px;border:1px solid #d7dce3;border-radius:12px;font:inherit}
-    .auth-card button{margin-top:16px;width:100%;cursor:pointer}
-    .auth-message{margin-top:14px;line-height:1.8}
-    .muted{color:#64748b;font-size:.94rem}
-  </style>
-<link rel="stylesheet" href="assets/athar-identity.css">
-  <link rel="stylesheet" href="assets/athar-design-system.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F7FAFC"><link rel="icon" type="image/svg+xml" href="assets/athar-mark.svg">
+<meta name="robots" content="noindex,nofollow"><title>تسجيل الدخول | أثَر</title>
+<meta name="description" content="تسجيل الدخول الآمن إلى منصة أثَر التعليمية.">
+<link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/athar-identity.css"><link rel="stylesheet" href="assets/athar-design-system.css">
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(145deg,#fff,#f7fafc 58%,#e7f0ee);line-height:1.85}
+.auth-wrap{width:min(100% - 28px,520px);margin:clamp(24px,7vh,64px) auto}.auth-card{background:#fff;border:1px solid #dce6eb;border-radius:24px;padding:clamp(20px,5vw,36px);box-shadow:0 18px 48px #16324f14}
+.brand-head{text-align:center;margin-bottom:22px}.brand-mark{display:grid;place-items:center;width:62px;height:62px;margin:0 auto 12px;border-radius:18px;background:#16324f;color:#fff;font-size:2rem;font-weight:900}
+.eyebrow{margin:0;color:#0f766e;font-weight:800}h1{margin:8px 0;color:#16324f;font-size:clamp(1.65rem,5vw,2.1rem);line-height:1.5;text-wrap:balance}.intro,.muted{color:#526575;line-height:1.9}
+.provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.provider-btn,.primary-btn,.qr-status{min-height:48px;padding:11px 12px;border-radius:12px;font:inherit;font-weight:800;line-height:1.6;white-space:normal}
+.provider-btn{background:#fff;color:#16324f;border:1px solid #cbd8e0;cursor:pointer}.provider-btn:hover{background:#f7fafc;border-color:#0f766e}
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:#607080;font-size:.9rem}.divider:before,.divider:after{content:"";height:1px;flex:1;background:#dce6eb}
+label{display:block;margin:18px 0 8px;font-weight:700;color:#16324f}input{width:100%;min-height:48px;padding:12px 14px;border:1px solid #cbd8e0;border-radius:12px;font:inherit;direction:ltr;text-align:left}
+.primary-btn{width:100%;margin-top:14px;background:#0f766e;color:#fff;border:1px solid #0f766e;cursor:pointer}
+.auth-message{min-height:1.8em;margin:14px 0 0;color:#16324f;overflow-wrap:anywhere}.owner-panel{margin-top:18px;padding:16px;border:1px dashed #b9cbd6;border-radius:16px;background:#fbfdfd}
+.owner-panel h2{margin:0 0 5px;font-size:1.08rem;color:#16324f}.owner-panel p,.small-note{margin:0;color:#526575;font-size:.92rem;line-height:1.85}
+.qr-status{width:100%;margin-top:12px;background:#eef2f5;color:#526575;border:1px solid #dce6eb;cursor:not-allowed}
+.security-note{background:#f7fafc;border:1px solid #dce6eb;border-right:4px solid #e6a23c;border-radius:12px;padding:12px 14px;margin:18px 0;color:#405367;font-size:.91rem;line-height:1.85}
+.back-link{display:inline-block;margin-top:18px;color:#0f766e;font-weight:700;text-underline-offset:4px}
+:where(a,button,input):focus-visible{outline:3px solid #e6a23c;outline-offset:3px}
+@media(max-width:390px){.provider-grid{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+</style>
 </head>
-<body>
-  <main class="auth-wrap">
-    <section class="auth-card">
-      <div class="brand-mark" aria-hidden="true">أ</div><p class="eyebrow">أثَر • منصة الاستعداد للقدرات</p>
-      <h1>مرحباً بعودتك</h1>
-      <p class="muted">مساحة آمنة للمالك والمدير. سجّل الدخول عبر رابط تحقق يُرسل إلى بريدك المسجّل.</p>
-      <form id="sign-in-form">
-        <label for="email">البريد الإلكتروني</label>
-        <input id="email" type="email" autocomplete="email" required placeholder="name@example.com">
-        <button class="button button-primary" type="submit">إرسال رابط الدخول</button>
-      </form>
-      <p id="auth-message" class="auth-message" role="status" aria-live="polite"></p><div class="security-note">🔒 التسجيل العام مغلق. لا يمكن منح صلاحية المالك من هذه الصفحة؛ تُدار الصلاحيات من قاعدة البيانات فقط.</div>
-      <p class="muted">إذا لم يكن بريدك مسجّلًا ومصرّحًا له، فلن يُنشأ حساب جديد.</p>
-      <a href="index.html">العودة إلى الرئيسية</a>
-    </section>
-  </main>
-  <script src="assets/supabase-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/auth.js"></script>
-
-  <script defer src="assets/athar-notifications.js"></script>
-<script defer src="/productos-badge.js"></script>
-</body>
-</html>
+<body><main class="auth-wrap"><section class="auth-card" aria-labelledby="page-title">
+<header class="brand-head"><div class="brand-mark" aria-hidden="true">أ</div><p class="eyebrow">أثَر · منصة الاستعداد لاختبار القدرات</p><h1 id="page-title">مرحبًا بعودتك</h1><p class="intro">اختر طريقة الدخول المناسبة. التسجيل العام مغلق، ولا يمكن إنشاء حساب جديد من هذه الصفحة.</p></header>
+<div class="provider-grid" aria-label="خيارات تسجيل الدخول"><button class="provider-btn" type="button" id="google-sign-in">المتابعة باستخدام Google</button><button class="provider-btn" type="button" id="apple-sign-in">المتابعة باستخدام Apple</button></div>
+<div class="divider" aria-hidden="true">أو عبر البريد الإلكتروني</div>
+<form id="sign-in-form"><label for="email">البريد الإلكتروني المسجّل</label><input id="email" name="email" type="email" autocomplete="email" required placeholder="name@example.com"><button class="primary-btn" type="submit">إرسال رابط دخول آمن</button></form>
+<p id="auth-message" class="auth-message" role="status" aria-live="polite"></p>
+<section class="owner-panel" aria-labelledby="owner-title"><h2 id="owner-title">دخول المالك عبر رمز QR</h2><p>لن يُفعّل هذا الخيار إلا بعد تجهيز تحقق آمن برمز مؤقت يُستخدم مرة واحدة وتأكيد الهوية من جهاز موثوق. لن نستخدم رمزًا ثابتًا يمنح صلاحية المالك.</p><button class="qr-status" type="button" disabled aria-disabled="true">دخول المالك عبر QR — غير مفعّل بعد</button></section>
+<p class="security-note">🔒 صلاحية المالك تُحدّد من قاعدة البيانات فقط. تسجيل الدخول باستخدام Google أو Apple لا يمنح صلاحيات إدارية تلقائيًا.</p><p class="small-note">إذا لم يكن بريدك مسجّلًا ومصرّحًا له، فلن يُنشأ حساب جديد.</p><a class="back-link" href="index.html">العودة إلى الصفحة الرئيسية</a>
+</section></main>
+<script src="assets/supabase-config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="assets/auth.js"></script><script defer src="assets/athar-notifications.js"></script>
+</body></html>
