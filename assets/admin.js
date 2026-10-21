@@ -209,17 +209,20 @@
   async function removeRow(row, button) {
     if (!confirm("هل تريد حذف هذا المحتوى نهائيًا؟ لا يمكن التراجع عن الحذف.")) return;
     if (button) button.disabled = true;
-    const { error: deleteError } = await client.from("course_content").delete().eq("id", row.id);
-    if (deleteError) {
-      if (button) button.disabled = false;
-      return say("تعذر حذف سجل المحتوى: " + deleteError.message, true);
-    }
+    // Remove the private object first. If storage deletion fails, keep the
+    // database row so staff can retry and the file remains discoverable.
     if (row.storage_path) {
       const { error: storageError } = await client.storage.from("athar-content").remove([row.storage_path]);
       if (storageError) {
-        await loadContent();
-        return say("حُذف سجل المحتوى لكن تعذر تنظيف الملف من التخزين: " + storageError.message, true);
+        if (button) button.disabled = false;
+        return say("تعذر حذف الملف من التخزين؛ احتفظنا بسجل المحتوى لتتمكن من إعادة المحاولة. السبب: " + storageError.message, true);
       }
+    }
+    const { error: deleteError } = await client.from("course_content").delete().eq("id", row.id);
+    if (deleteError) {
+      await loadContent();
+      if (button) button.disabled = false;
+      return say("تم حذف الملف من التخزين، لكن تعذر حذف سجل المكتبة. أعد المحاولة لحذف السجل. السبب: " + deleteError.message, true);
     }
     await loadContent();
     say("تم حذف المحتوى وسجلّه من المكتبة.");
