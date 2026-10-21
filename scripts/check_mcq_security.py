@@ -8,6 +8,10 @@ ROOT = Path(__file__).resolve().parents[1]
 BASE_MIGRATION = ROOT / "supabase" / "migrations" / "20261021180000_protect_mcq_answer_keys.sql"
 VIEW_MIGRATION = ROOT / "supabase" / "migrations" / "20261021182000_make_mcq_public_view_invoker_safe.sql"
 ACCESS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021183000_grant_safe_mcq_public_view_reads.sql"
+PUBLIC_API_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143356_hide_mcq_explanations_from_public_api.sql"
+RATE_LIMIT_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143028_athar_assistant_persistent_rate_limit.sql"
+RATE_LIMIT_POLICY_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143142_rate_limit_explicit_deny_policy.sql"
+ASSISTANT_FUNCTION = ROOT / "supabase" / "functions" / "athar-assistant" / "index.ts"
 
 
 def compact_sql(path: Path) -> str:
@@ -16,7 +20,7 @@ def compact_sql(path: Path) -> str:
 
 def main() -> int:
     errors = []
-    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION):
+    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION, PUBLIC_API_MIGRATION, RATE_LIMIT_MIGRATION, RATE_LIMIT_POLICY_MIGRATION, ASSISTANT_FUNCTION):
         if not path.is_file():
             errors.append(f"Missing security migration: {path.relative_to(ROOT)}")
     if errors:
@@ -27,6 +31,10 @@ def main() -> int:
     base = compact_sql(BASE_MIGRATION)
     view = compact_sql(VIEW_MIGRATION)
     access = compact_sql(ACCESS_MIGRATION)
+    public_api = compact_sql(PUBLIC_API_MIGRATION)
+    rate_limit = compact_sql(RATE_LIMIT_MIGRATION)
+    rate_limit_policy = compact_sql(RATE_LIMIT_POLICY_MIGRATION)
+    assistant = compact_sql(ASSISTANT_FUNCTION)
 
     if "revoke select on table public.mcq_questions from anon, public" not in base:
         errors.append("Anonymous/PUBLIC roles must not have table-level SELECT.")
@@ -52,6 +60,29 @@ def main() -> int:
         errors.append("The safe public view must be readable by learning clients.")
     if "revoke insert, update, delete on table public.mcq_public_questions from anon, authenticated, public" not in access:
         errors.append("Public view access must remain read-only.")
+
+    if "create view public.mcq_public_questions" not in public_api or "security_invoker = true" not in public_api:
+        errors.append("Final public MCQ view must use invoker privileges.")
+    public_view_match = re.search(
+        r"create view public\.mcq_public_questions.*?as select (.*?) from public\.mcq_questions where status = 'approved'",
+        public_api,
+    )
+    if not public_view_match:
+        errors.append("Final public MCQ view definition must be present.")
+    elif any(secret in public_view_match.group(1) for secret in ("correct_index", "explanation", "source_name", "status")):
+        errors.append("Final public MCQ view must not expose answer keys, explanations, or internal metadata.")
+    if "revoke select (explanation, source_name, status) on table public.mcq_questions from anon" not in public_api:
+        errors.append("Anonymous clients must not read explanations or internal MCQ metadata directly.")
+    if "create or replace function public.consume_athar_assistant_rate_limit" not in rate_limit:
+        errors.append("Durable server-side assistant rate limiter migration is missing.")
+    if "grant execute on function public.consume_athar_assistant_rate_limit(text, integer, integer) to service_role" not in rate_limit:
+        errors.append("Only service_role should execute the durable rate limiter.")
+    if "using (false)" not in rate_limit_policy or "with check (false)" not in rate_limit_policy:
+        errors.append("Rate-limit table must explicitly deny client RLS access.")
+    if "hmacsha256" not in assistant or "12, 60" not in assistant or "150, 86400" not in assistant:
+        errors.append("Assistant must use HMAC-keyed durable minute and daily rate limits.")
+    if "fail closed" not in assistant or "retry-after" not in assistant:
+        errors.append("Rate limiting must fail closed and return Retry-After when throttled.")
 
     if errors:
         for error in errors:
