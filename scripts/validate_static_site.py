@@ -44,8 +44,8 @@ def main():
     errors = []
     if not pages:
         errors.append("No HTML pages were generated in dist/.")
-    if (DIST / "admin.html").exists():
-        errors.append("admin.html must not be published until server-side auth/RBAC exists.")
+    if not (DIST / "admin.html").exists():
+        errors.append("admin.html must be included; Supabase RLS and Storage policies enforce authorization.")
 
     for page in pages:
         parser = References()
