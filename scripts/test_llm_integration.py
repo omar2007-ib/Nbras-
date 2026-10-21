@@ -34,7 +34,7 @@ assert '<option value="link">رابط خارجي</option>' in admin_page, "Admin
 assert 'name="external_url" type="url"' in admin_page, "External link field must be a URL input."
 assert 'if (parsedUrl.protocol !== "https:")' in admin, "Admin must reject non-HTTPS external links."
 assert 'content_type: "link"' in admin and 'external_url: externalUrl' in admin, "External links must be saved to the content table."
-assert 'external.rel = "_blank"' not in admin, "External links must not use a scriptable URL target."
+assert 'external.rel = "noopener noreferrer"' in admin, "External links must prevent opener access."
 assert 'if page.name == "admin.html"' not in build, "Build should include the RLS-protected admin route."
 assert "|admin|" in auth, "Login must support the published admin route."
 for env in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "LLM_PROVIDER"):
