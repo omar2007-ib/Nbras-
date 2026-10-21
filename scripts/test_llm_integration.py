@@ -32,7 +32,7 @@ for env in ("LLM_API_KEY", "LLM_BASE_URL", "LLM_MODEL", "LLM_PROVIDER"):
     assert env in function, f"Edge Function must support {env}."
 assert 'fetch(baseUrl + "/chat/completions"' in function, "Gateway must use the configured provider endpoint."
 assert 'includes(profiles[0].role)' in function and '"owner", "admin"' in function, "Server must enforce owner/admin authorization."
-assert "LLM_API_KEY" in setup and "not" not in "", "Provider secrets must be documented."
+assert "LLM_API_KEY" in setup and "لا تضع أي مفتاح" in setup, "Provider secrets and secret-safety rules must be documented."
 assert "llm-providers.html" in readme and "LLM_BASE_URL" in readme, "README must document the live integration architecture."
 assert "API موحدة" in page, "The page must explain that the upstream directory is not a unified API."
 print("ATHAR LLM integration and MCQ builder static regression checks passed.")
