@@ -90,6 +90,9 @@ def main() -> int:
     if "fail closed" not in assistant or "retry-after" not in assistant:
         errors.append("Rate limiting must fail closed and return Retry-After when throttled.")
 
+    if '"https://athar-learning-platform.vercel.app"' not in assistant:
+        errors.append("The production Vercel origin must be allowlisted for assistant CORS.")
+
     if errors:
         for error in errors:
             print("FAIL: " + error)
