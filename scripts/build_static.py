@@ -16,12 +16,19 @@ for page in ROOT.glob("*.html"):
     destination = OUT / page.name
     html = page.read_text(encoding="utf-8")
     stylesheet = '<link rel="stylesheet" href="assets/athar-design-system.css">'
+    premium_stylesheet = '<link rel="stylesheet" href="assets/athar-premium.css">'
     if "athar-design-system.css" not in html:
         if "</head>" in html:
             html = html.replace("</head>", f"  {stylesheet}\n</head>", 1)
         else:
             # Preserve a valid fallback for any legacy page missing a head close.
             html = stylesheet + "\n" + html
+    # Load the premium responsive layer last so it consistently wins over legacy page CSS.
+    if "athar-premium.css" not in html:
+        if "</head>" in html:
+            html = html.replace("</head>", f"  {premium_stylesheet}\n</head>", 1)
+        else:
+            html = premium_stylesheet + "\n" + html
     destination.write_text(html, encoding="utf-8")
 
 assets = ROOT / "assets"
