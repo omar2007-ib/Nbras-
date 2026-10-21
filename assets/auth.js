@@ -10,10 +10,12 @@
     message.textContent = text;
     message.style.color = error ? "#9b2c2c" : "#16324f";
   };
+  let supabaseClient;
   const client = () => {
     if (!config.url || !config.publishableKey) throw new Error("خدمة تسجيل الدخول غير مربوطة حاليًا.");
     if (!window.supabase?.createClient) throw new Error("تعذر تحميل خدمة تسجيل الدخول. تحقق من اتصال الإنترنت.");
-    return window.supabase.createClient(config.url, config.publishableKey);
+    if (!supabaseClient) supabaseClient = window.supabase.createClient(config.url, config.publishableKey);
+    return supabaseClient;
   };
   const redirect = () => {
     const params = new URLSearchParams(location.search);
@@ -26,7 +28,8 @@
     button.disabled = true;
     say("جارٍ فتح تسجيل الدخول الآمن…");
     try {
-      const result = await client().auth.signInWithOAuth({provider, options:{redirectTo:redirect()}});
+      const callback = new URL("auth.html?next=admin.html", location.href).toString();
+      const result = await client().auth.signInWithOAuth({provider, options:{redirectTo:callback}});
       if (result.error) throw result.error;
     } catch (_) {
       say(provider === "google" ? "تعذر بدء دخول Google. تأكد من تفعيل Google في Supabase وضبط Client ID وSecret وعنوان الرجوع." : "تعذر بدء دخول Apple. تأكد من تفعيل Apple في Supabase وضبط Services ID والمفاتيح وعنوان الرجوع.", true);
@@ -34,7 +37,30 @@
       button.textContent = old;
     }
   }
-  document.querySelector("#google-sign-in")?.addEventListener("click", e => oauth("google", e.currentTarget));
+
+  // Complete OAuth/magic-link callbacks on this page before forwarding to the requested destination.
+  (async function finishAuthCallback() {
+    const params = new URLSearchParams(location.search);
+    const hasCallback = params.has("code") || params.has("error") || /(?:^|[&#])access_token=/.test(location.hash);
+    if (params.has("error")) {
+      say("تعذر إكمال تسجيل الدخول: " + (params.get("error_description") || params.get("error")), true);
+      return;
+    }
+    if (!hasCallback) return;
+    try {
+      const { data, error } = await client().auth.getSession();
+      if (error) throw error;
+      if (data?.session?.user) {
+        say("تم التحقق من الجلسة. جارٍ فتح لوحة الإدارة…");
+        window.location.replace(redirect());
+      } else {
+        say("لم تكتمل جلسة الدخول. أعد المحاولة وتأكد من إعداد عنوان الرجوع في Supabase.", true);
+      }
+    } catch (_) {
+      say("تعذر إكمال جلسة الدخول. تحقق من إعدادات OAuth وعناوين الرجوع في Supabase.", true);
+    }
+  })();
+\n  document.querySelector("#google-sign-in")?.addEventListener("click", e => oauth("google", e.currentTarget));
   document.querySelector("#apple-sign-in")?.addEventListener("click", e => oauth("apple", e.currentTarget));
   form.addEventListener("submit", async event => {
     event.preventDefault();
