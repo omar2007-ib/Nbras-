@@ -74,11 +74,20 @@
     button.disabled = true;
     say("جارٍ فتح تسجيل الدخول الآمن…");
     try {
-      const callback = new URL("auth.html?next=admin.html", location.href).toString();
-      const result = await client().auth.signInWithOAuth({ provider, options: { redirectTo: callback } });
+      // Preserve the safe destination and owner-QR flow through the OAuth callback.
+      const destination = new URL(redirect());
+      const callback = new URL("auth.html", location.href);
+      callback.searchParams.set("next", destination.pathname.split("/").pop() || "index.html");
+      if (isOwnerQr) callback.searchParams.set("owner_qr", OWNER_QR_CODE);
+      const result = await client().auth.signInWithOAuth({ provider, options: { redirectTo: callback.toString() } });
       if (result.error) throw result.error;
-    } catch (_) {
-      say(provider === "google" ? "تعذر بدء دخول Google. تأكد من تفعيل Google في Supabase وضبط Client ID وSecret وعنوان الرجوع." : "تعذر بدء دخول Apple. تأكد من تفعيل Apple في Supabase وضبط Services ID والمفاتيح وعنوان الرجوع.", true);
+    } catch (error) {
+      const detail = typeof error?.message === "string" ? error.message.trim() : "";
+      const providerName = provider === "google" ? "Google" : "Apple";
+      const setupHint = provider === "google"
+        ? "تأكد من تفعيل Google في Supabase وضبط Client ID وSecret وعنوان الرجوع."
+        : "تأكد من تفعيل Apple في Supabase وضبط Services ID والمفاتيح وعنوان الرجوع.";
+      say("تعذر بدء دخول " + providerName + (detail ? " (" + detail.slice(0, 180) + ")" : "") + ". " + setupHint, true);
       button.disabled = false;
       button.textContent = old;
     }
@@ -96,7 +105,7 @@
       const { data, error } = await client().auth.getSession();
       if (error) throw error;
       if (data?.session?.user) {
-        say("تم التحقق من الجلسة. جارٍ فتح لوحة الإدارة…");
+        say("تم التحقق من الجلسة. جارٍ فتح الصفحة المطلوبة…");
         window.location.replace(redirect());
       } else {
         say("لم تكتمل جلسة الدخول. أعد المحاولة وتأكد من إعداد عنوان الرجوع في Supabase.", true);
