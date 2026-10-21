@@ -22,7 +22,7 @@ function cors(origin: string | null) {
     "Vary": "Origin",
   };
 }
-function reply(body: unknown, status = 200, origin: string | null = null) {
+function reply(body: unknown, status = 200, origin: string | null = null, extraHeaders: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
@@ -30,8 +30,47 @@ function reply(body: unknown, status = 200, origin: string | null = null) {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
+      ...extraHeaders,
     },
   });
+}
+
+async function hmacSha256(secret: string, value: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function consumeRateLimit(
+  serviceUrl: string,
+  serviceKey: string,
+  ip: string,
+  suffix: string,
+  limit: number,
+  windowSeconds: number,
+): Promise<{ allowed: boolean; remaining: number; resetAt: string } | null> {
+  const keyHash = await hmacSha256(serviceKey, `athar-assistant:${suffix}:${ip}`);
+  const response = await fetch(`${serviceUrl}/rest/v1/rpc/consume_athar_assistant_rate_limit`, {
+    method: "POST",
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_key_hash: keyHash, p_limit: limit, p_window_seconds: windowSeconds }),
+    signal: AbortSignal.timeout(3000),
+  });
+  if (!response.ok) return null;
+  const result = await response.json();
+  const row = Array.isArray(result) ? result[0] : result;
+  if (!row || typeof row.allowed !== "boolean") return null;
+  return { allowed: row.allowed, remaining: Number(row.remaining) || 0, resetAt: String(row.reset_at || "") };
 }
 
 Deno.serve(async (req: Request) => {
@@ -93,6 +132,50 @@ Deno.serve(async (req: Request) => {
   if (!message) return reply({ error: "اكتب سؤالك أولًا." }, 400, origin);
   if (message.length > MAX_MESSAGE_CHARS) {
     return reply({ error: "الرسالة طويلة جدًا. الحد 1800 حرف." }, 413, origin);
+  }
+
+  const serviceUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  // Use a proxy-supplied client address, preferring headers set by the edge platform.
+  const forwarded = req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",").map((part) => part.trim()).filter(Boolean).at(-1);
+  const ip = forwarded?.slice(0, 128);
+  if (!serviceUrl || !serviceKey || !ip) {
+    console.error("Athar assistant rate limit unavailable", {
+      hasServiceUrl: Boolean(serviceUrl),
+      hasServiceKey: Boolean(serviceKey),
+      hasClientAddress: Boolean(ip),
+    });
+    return reply({ error: "خدمة المساعد مشغولة مؤقتًا. حاول مرة أخرى بعد قليل." }, 503, origin);
+  }
+
+  let minuteLimit;
+  let dailyLimit;
+  try {
+    [minuteLimit, dailyLimit] = await Promise.all([
+      consumeRateLimit(serviceUrl, serviceKey, ip, "minute", 12, 60),
+      consumeRateLimit(serviceUrl, serviceKey, ip, "day", 150, 86400),
+    ]);
+  } catch {
+    minuteLimit = null;
+    dailyLimit = null;
+  }
+  // Fail closed: the public AI endpoint must not bypass throttling when the
+  // durable limiter is unavailable or its database contract is malformed.
+  if (!minuteLimit || !dailyLimit) {
+    console.error("Athar assistant rate limit check failed");
+    return reply({ error: "تعذّر التحقق من حد الاستخدام. حاول مرة أخرى بعد قليل." }, 503, origin);
+  }
+  if (!minuteLimit.allowed || !dailyLimit.allowed) {
+    const resetAt = !minuteLimit.allowed ? minuteLimit.resetAt : dailyLimit.resetAt;
+    const retryAfter = Math.max(1, Math.ceil((Date.parse(resetAt) - Date.now()) / 1000) || 60);
+    return reply(
+      { error: "وصلت إلى حد استخدام المساعد مؤقتًا. انتظر قليلًا ثم حاول مرة أخرى." },
+      429,
+      origin,
+      { "Retry-After": String(Math.min(retryAfter, 86400)), "X-RateLimit-Limit": !minuteLimit.allowed ? "12" : "150" },
+    );
   }
 
   const history: Array<{ role: "assistant" | "user"; content: string }> = [];
