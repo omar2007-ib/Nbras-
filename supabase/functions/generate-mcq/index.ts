@@ -58,16 +58,23 @@ Deno.serve(async (req: Request) => {
   const systemPrompt = `أنت مساعد خبير في إعداد أسئلة تدريبية عربية لاختبار القدرات السعودي. أنشئ أسئلة اختيار من متعدد دقيقة، ولا تختلق معلومات خارج المصدر عندما يكون وضع المصدر مطلوبًا. أعد JSON فقط بهذا الشكل: {"questions":[{"question":"...","options":["...","...","...","..."],"correct":0,"category":"كمي","difficulty":"متوسط","explanation":"..."}]}. correct فهرس من 0 إلى 3. اجعل الخيارات مختلفة ومعقولة، وإجابة واحدة صحيحة فقط. في الأسئلة الحسابية تحقق من الحل حسابيًا واشرح خطواته. لا تنسخ فقرات المصدر حرفيًا؛ أنشئ صياغات تدريبية جديدة.`;
   const mode = body.mode === "extract" ? "استخرج الأسئلة الموجودة فعلًا في المصدر وأعد صياغتها بأمانة عند الحاجة، ولا تخترع سؤالًا غير موجود." : "أنشئ أسئلة جديدة مستندة إلى المفاهيم والمهارات الموجودة في المصدر، وليست مجرد نسخ حرفي.";
   const userPrompt = `المطلوب: ${count} سؤالًا. القسم: ${category}. الصعوبة: ${difficulty}. المهمة: ${mode}\n\nالمصدر:\n${sourceText}`;
-  const aiResponse = await fetch(baseUrl + "/chat/completions", {
+  const endpoint = baseUrl + "/chat/completions";
+  const messages = [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }];
+  const requestBody = { model, temperature: 0.25, response_format: { type: "json_object" }, messages };
+  let aiResponse = await fetch(endpoint, {
     method: "POST",
     headers: { Authorization: `Bearer ${aiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      temperature: 0.25,
-      response_format: { type: "json_object" },
-      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
-    }),
+    body: JSON.stringify(requestBody),
   });
+  // Some OpenAI-compatible providers/models do not implement JSON mode. Retry only
+  // on request-shape errors, without weakening authentication or response validation.
+  if (!aiResponse.ok && [400, 422].includes(aiResponse.status)) {
+    aiResponse = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${aiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model, temperature: 0.25, messages }),
+    });
+  }
   if (!aiResponse.ok) {
     const details = await aiResponse.text();
     console.error("LLM gateway error", providerName, aiResponse.status, details.slice(0, 500));
