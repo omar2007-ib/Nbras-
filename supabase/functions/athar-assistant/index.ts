@@ -195,16 +195,20 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  const aiKey = Deno.env.get("LLM_API_KEY") || Deno.env.get("OPENAI_API_KEY");
-  const legacy = Boolean(Deno.env.get("OPENAI_API_KEY")) && !Deno.env.get("LLM_API_KEY");
-  const base = (Deno.env.get("LLM_BASE_URL") ||
+  const rawAiKey = Deno.env.get("LLM_API_KEY") || Deno.env.get("OPENAI_API_KEY") || "";
+  // Accept a copied key with surrounding whitespace or a pasted Bearer prefix,
+  // but never send empty or obvious placeholder values to the provider.
+  const aiKey = rawAiKey.trim().replace(/^Bearer\s+/i, "").trim();
+  const legacy = Boolean(Deno.env.get("OPENAI_API_KEY")?.trim()) && !Deno.env.get("LLM_API_KEY")?.trim();
+  const base = (Deno.env.get("LLM_BASE_URL")?.trim() ||
     (legacy ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1")).replace(/\/+$/, "");
-  const model = Deno.env.get("LLM_MODEL") || Deno.env.get("OPENAI_MODEL") ||
-    (legacy ? "gpt-4o-mini" : "openai/gpt-oss-20b:free");
-  const provider = Deno.env.get("LLM_PROVIDER") || (legacy ? "OpenAI" : "OpenRouter");
-  if (!aiKey) {
+  const model = (Deno.env.get("LLM_MODEL")?.trim() || Deno.env.get("OPENAI_MODEL")?.trim() ||
+    (legacy ? "gpt-4o-mini" : "openai/gpt-oss-20b:free"));
+  const provider = Deno.env.get("LLM_PROVIDER")?.trim() || (legacy ? "OpenAI" : "OpenRouter");
+  const placeholderKey = /^(?:your[_ -]?|replace[_ -]?|paste[_ -]?|insert[_ -]?|example[_ -]?|changeme\b|<.*>)/i.test(aiKey);
+  if (!aiKey || placeholderKey) {
     return reply({
-      error: "مساعد أثَر جاهز من ناحية الواجهة، لكن خدمة الذكاء الاصطناعي غير مفعّلة بعد. أضف LLM_API_KEY في أسرار Supabase.",
+      error: "مفتاح مزوّد الذكاء الاصطناعي غير مضبوط أو ما زال قيمة تجريبية. أضف مفتاحًا صالحًا في سر LLM_API_KEY داخل Supabase ثم أعد المحاولة.",
     }, 503, origin);
   }
 
@@ -235,8 +239,13 @@ Deno.serve(async (req: Request) => {
   }
 
   if (!response.ok) {
-    const details = (await response.text()).slice(0, 400);
-    console.error("Athar assistant provider error", provider, response.status, details);
+    // Do not echo provider bodies or credentials into client responses/logs.
+    console.error("Athar assistant provider error", provider, response.status);
+    if (response.status === 401 || response.status === 403) {
+      return reply({
+        error: "رفض مزوّد الذكاء الاصطناعي بيانات المصادقة. تحقّق من صلاحية LLM_API_KEY ومن أن LLM_BASE_URL يطابق المزوّد الذي أصدر المفتاح.",
+      }, 503, origin);
+    }
     return reply({
       error: "تعذّر الحصول على رد الآن. تحقق من إعدادات مزوّد الذكاء الاصطناعي وحدود الاستخدام.",
     }, 502, origin);

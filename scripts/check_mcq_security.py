@@ -11,6 +11,7 @@ ACCESS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021183000_grant_safe
 PUBLIC_API_MIGRATION = ROOT / "supabase" / "migrations" / "20261021184000_hide_mcq_explanations_from_public_api.sql"
 PUBLIC_VIEW_GRANTS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021184100_revoke_public_mcq_view_mutations.sql"
 SAFE_COLUMNS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021185000_grant_safe_mcq_base_columns.sql"
+FINAL_VIEW_MIGRATION = ROOT / "supabase" / "migrations" / "20261021185100_fix_invoker_view_column_privileges.sql"
 RATE_LIMIT_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143028_athar_assistant_persistent_rate_limit.sql"
 RATE_LIMIT_POLICY_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143142_rate_limit_explicit_deny_policy.sql"
 ASSISTANT_FUNCTION = ROOT / "supabase" / "functions" / "athar-assistant" / "index.ts"
@@ -22,7 +23,7 @@ def compact_sql(path: Path) -> str:
 
 def main() -> int:
     errors = []
-    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION, PUBLIC_API_MIGRATION, PUBLIC_VIEW_GRANTS_MIGRATION, SAFE_COLUMNS_MIGRATION, RATE_LIMIT_MIGRATION, RATE_LIMIT_POLICY_MIGRATION, ASSISTANT_FUNCTION):
+    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION, PUBLIC_API_MIGRATION, PUBLIC_VIEW_GRANTS_MIGRATION, SAFE_COLUMNS_MIGRATION, FINAL_VIEW_MIGRATION, RATE_LIMIT_MIGRATION, RATE_LIMIT_POLICY_MIGRATION, ASSISTANT_FUNCTION):
         if not path.is_file():
             errors.append(f"Missing security migration: {path.relative_to(ROOT)}")
     if errors:
@@ -36,6 +37,7 @@ def main() -> int:
     public_api = compact_sql(PUBLIC_API_MIGRATION)
     public_view_grants = compact_sql(PUBLIC_VIEW_GRANTS_MIGRATION)
     safe_columns = compact_sql(SAFE_COLUMNS_MIGRATION)
+    final_view = compact_sql(FINAL_VIEW_MIGRATION)
     rate_limit = compact_sql(RATE_LIMIT_MIGRATION)
     rate_limit_policy = compact_sql(RATE_LIMIT_POLICY_MIGRATION)
     assistant = compact_sql(ASSISTANT_FUNCTION)
@@ -85,6 +87,12 @@ def main() -> int:
         errors.append("Security-invoker view must grant only the safe underlying columns to anonymous learners.")
     if any(secret in safe_columns for secret in ("correct_index", "explanation", "source_name", "status")):
         errors.append("Anonymous base-table column grants must exclude answer keys and internal metadata.")
+    if "with (security_invoker = true)" not in final_view or "from public.mcq_questions;" not in final_view:
+        errors.append("Final public view must be invoker-safe and rely on table RLS for approved-row filtering.")
+    if "where status" in final_view:
+        errors.append("Invoker view must not reference ungranted internal status columns in its predicate.")
+    if "revoke all on table public.mcq_public_questions from public, anon, authenticated, service_role" not in final_view:
+        errors.append("Final view must clear default grants before assigning the intended client roles.")
     if "create or replace function public.consume_athar_assistant_rate_limit" not in rate_limit:
         errors.append("Durable server-side assistant rate limiter migration is missing.")
     if "grant execute on function public.consume_athar_assistant_rate_limit(text, integer, integer) to service_role" not in rate_limit:
@@ -95,6 +103,10 @@ def main() -> int:
         errors.append("Assistant must use HMAC-keyed durable minute and daily rate limits.")
     if "fail closed" not in assistant or "retry-after" not in assistant:
         errors.append("Rate limiting must fail closed and return Retry-After when throttled.")
+    if 'rawaikey' not in assistant or 'replace(/^bearer\\s+/i, "")' not in assistant:
+        errors.append("Assistant provider keys must be trimmed and normalize an optional Bearer prefix.")
+    if "placeholderkey" not in assistant or "رفض مزوّد الذكاء الاصطناعي بيانات المصادقة" not in assistant:
+        errors.append("Invalid provider credentials must produce a clear configuration error instead of a generic 502.")
 
     if '"https://athar-learning-platform.vercel.app"' not in assistant:
         errors.append("The production Vercel origin must be allowlisted for assistant CORS.")
