@@ -1,7 +1,7 @@
 -- ATHAR: safely promote an already-created Auth user to the initial owner.
 -- Run ONLY in Supabase SQL Editor (trusted admin context).
 -- 1) Create the intended user in Supabase Dashboard > Authentication > Users first.
--- 2) Replace the placeholder below with that exact account email.
+-- 2) Replace BOTH occurrences of YOUR_EMAIL@example.com below with that exact account email.
 -- 3) Run this script. It does not create users and fails if the email is missing.
 DO $$
 DECLARE
@@ -30,7 +30,7 @@ BEGIN
 END
 $$;
 
--- Verification: this must return exactly one row with role = owner.
+-- Verification: replace the email here too; this must return one row with role = owner.
 SELECT u.email, p.id, p.role
 FROM auth.users AS u
 JOIN public.profiles AS p ON p.id = u.id
