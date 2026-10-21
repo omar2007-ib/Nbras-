@@ -17,9 +17,20 @@
     if (!supabaseClient) supabaseClient = window.supabase.createClient(config.url, config.publishableKey);
     return supabaseClient;
   };
+  const OWNER_QR_CODE = "ATHAR-OWNER-QR-2026";
+  const isOwnerQr = new URLSearchParams(location.search).get("owner_qr") === OWNER_QR_CODE;
+  if (isOwnerQr) {
+    const ownerPanel = document.querySelector("#owner-qr-recognition");
+    if (ownerPanel) ownerPanel.hidden = false;
+    document.title = "دخول المالك | أثَر";
+    const pageTitle = document.querySelector("#page-title");
+    if (pageTitle) pageTitle.textContent = "دخول المالك";
+    const intro = document.querySelector(".intro");
+    if (intro) intro.textContent = "تم التعرّف على رمز QR الخاص بالمالك. سجّل الدخول بالحساب المعتمد لإكمال التحقق.";
+  }
   const redirect = () => {
     const params = new URLSearchParams(location.search);
-    const requested = params.get("next") || (params.get("owner") === "1" ? "admin.html" : "index.html");
+    const requested = params.get("next") || (isOwnerQr || params.get("owner") === "1" ? "admin.html" : "index.html");
     const safe = /^(index|admin|courses|practice|exam|resources|study-plan|mcq-builder)\.html$/.test(requested) ? requested : "index.html";
     return new URL(safe, location.href).toString();
   };
