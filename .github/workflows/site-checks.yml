@@ -21,5 +21,7 @@ jobs:
         run: python scripts/check_site.py
       - name: Run quiz regression checks
         run: python scripts/test_quiz_content.py
+      - name: Verify LLM gateway and MCQ builder integration
+        run: python scripts/test_llm_integration.py
       - name: Build and validate deployment output
         run: python scripts/validate_static_site.py
