@@ -23,5 +23,7 @@ jobs:
         run: python scripts/test_quiz_content.py
       - name: Verify LLM gateway and MCQ builder integration
         run: python scripts/test_llm_integration.py
+      - name: Run MCQ and assistant security regression checks
+        run: python scripts/check_mcq_security.py
       - name: Build and validate deployment output
         run: python scripts/validate_static_site.py
