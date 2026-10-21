@@ -9,6 +9,7 @@ BASE_MIGRATION = ROOT / "supabase" / "migrations" / "20261021180000_protect_mcq_
 VIEW_MIGRATION = ROOT / "supabase" / "migrations" / "20261021182000_make_mcq_public_view_invoker_safe.sql"
 ACCESS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021183000_grant_safe_mcq_public_view_reads.sql"
 PUBLIC_API_MIGRATION = ROOT / "supabase" / "migrations" / "20261021184000_hide_mcq_explanations_from_public_api.sql"
+PUBLIC_VIEW_GRANTS_MIGRATION = ROOT / "supabase" / "migrations" / "20261021184100_revoke_public_mcq_view_mutations.sql"
 RATE_LIMIT_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143028_athar_assistant_persistent_rate_limit.sql"
 RATE_LIMIT_POLICY_MIGRATION = ROOT / "supabase" / "migrations" / "20261021143142_rate_limit_explicit_deny_policy.sql"
 ASSISTANT_FUNCTION = ROOT / "supabase" / "functions" / "athar-assistant" / "index.ts"
@@ -20,7 +21,7 @@ def compact_sql(path: Path) -> str:
 
 def main() -> int:
     errors = []
-    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION, PUBLIC_API_MIGRATION, RATE_LIMIT_MIGRATION, RATE_LIMIT_POLICY_MIGRATION, ASSISTANT_FUNCTION):
+    for path in (BASE_MIGRATION, VIEW_MIGRATION, ACCESS_MIGRATION, PUBLIC_API_MIGRATION, PUBLIC_VIEW_GRANTS_MIGRATION, RATE_LIMIT_MIGRATION, RATE_LIMIT_POLICY_MIGRATION, ASSISTANT_FUNCTION):
         if not path.is_file():
             errors.append(f"Missing security migration: {path.relative_to(ROOT)}")
     if errors:
@@ -32,6 +33,7 @@ def main() -> int:
     view = compact_sql(VIEW_MIGRATION)
     access = compact_sql(ACCESS_MIGRATION)
     public_api = compact_sql(PUBLIC_API_MIGRATION)
+    public_view_grants = compact_sql(PUBLIC_VIEW_GRANTS_MIGRATION)
     rate_limit = compact_sql(RATE_LIMIT_MIGRATION)
     rate_limit_policy = compact_sql(RATE_LIMIT_POLICY_MIGRATION)
     assistant = compact_sql(ASSISTANT_FUNCTION)
@@ -73,6 +75,10 @@ def main() -> int:
         errors.append("Final public MCQ view must not expose answer keys, explanations, or internal metadata.")
     if "revoke select (explanation, source_name, status) on table public.mcq_questions from anon" not in public_api:
         errors.append("Anonymous clients must not read explanations or internal MCQ metadata directly.")
+    if "revoke all on table public.mcq_public_questions from public, anon, authenticated, service_role" not in public_view_grants:
+        errors.append("Recreated public MCQ view must not inherit broad default grants.")
+    if "grant select on table public.mcq_public_questions to anon, authenticated" not in public_view_grants:
+        errors.append("The final public MCQ view must grant SELECT only to learning clients.")
     if "create or replace function public.consume_athar_assistant_rate_limit" not in rate_limit:
         errors.append("Durable server-side assistant rate limiter migration is missing.")
     if "grant execute on function public.consume_athar_assistant_rate_limit(text, integer, integer) to service_role" not in rate_limit:
