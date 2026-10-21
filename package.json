@@ -8,6 +8,6 @@
     "tailwind-merge": "^3.7.0"
   },
   "scripts": {
-    "start": "python3 scripts/build_static.py && python3 -m http.server 3000 --bind 0.0.0.0 --directory dist"
+    "start": "python3 scripts/build_static.py && python3 scripts/serve_static.py"
   }
 }
