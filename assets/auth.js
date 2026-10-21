@@ -20,11 +20,11 @@
     try {
       const client = window.supabase.createClient(config.url, config.publishableKey);
       const requested = new URLSearchParams(window.location.search).get("next") || "index.html";
-      const safeNext = /^(index|admin|courses|practice|exam|resources|study-plan)\.html$/.test(requested) ? requested : "index.html";
+      const safeNext = /^(index|admin|courses|practice|exam|resources|study-plan|mcq-builder)\.html$/.test(requested) ? requested : "index.html";
       const redirectUrl = new URL(safeNext, window.location.href).toString();
-      const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl } });
+      const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectUrl, shouldCreateUser: false } });
       if (error) throw error;
-      message.textContent = "إذا كان البريد مسموحاً به، ستصلك رسالة تحقق. افتحها لإكمال الدخول.";
+      message.textContent = "إذا كان البريد مسجلاً ومصرحاً له، ستصلك رسالة دخول آمنة. لا يوجد تسجيل عام في لوحة الإدارة.";
     } catch (error) {
       message.textContent = error?.message || "تعذر إرسال رسالة الدخول. تحقق من إعدادات البريد في Supabase.";
     } finally { button.disabled = false; }
