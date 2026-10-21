@@ -22,9 +22,10 @@ Deno.serve(async (req: Request) => {
   // OpenAI-compatible gateway: configure a provider from the free-LLM directory.
   // Provider API keys stay server-side and are never shipped to the browser.
   const aiKey = Deno.env.get("LLM_API_KEY") || Deno.env.get("OPENAI_API_KEY");
-  const baseUrl = (Deno.env.get("LLM_BASE_URL") || "https://api.openai.com/v1").replace(/\/+$/, "");
-  const model = Deno.env.get("LLM_MODEL") || Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
-  const providerName = Deno.env.get("LLM_PROVIDER") || (Deno.env.get("OPENAI_API_KEY") ? "OpenAI" : "مزود متوافق مع OpenAI");
+  const hasLegacyOpenAI = Boolean(Deno.env.get("OPENAI_API_KEY")) && !Deno.env.get("LLM_API_KEY");
+  const baseUrl = (Deno.env.get("LLM_BASE_URL") || (hasLegacyOpenAI ? "https://api.openai.com/v1" : "https://openrouter.ai/api/v1")).replace(/\/+$/, "");
+  const model = Deno.env.get("LLM_MODEL") || Deno.env.get("OPENAI_MODEL") || (hasLegacyOpenAI ? "gpt-4o-mini" : "openai/gpt-oss-20b:free");
+  const providerName = Deno.env.get("LLM_PROVIDER") || (hasLegacyOpenAI ? "OpenAI" : "OpenRouter");
   if (!supabaseUrl || !anonKey) return reply({ error: "إعدادات Supabase غير مكتملة." }, 500);
   if (!aiKey) return reply({ error: "بوابة نماذج اللغة غير مفعّلة. أضف LLM_API_KEY وLLM_BASE_URL وLLM_MODEL في أسرار Supabase، أو استخدم إعدادات OpenAI القديمة. راجع docs/implementation/llm-provider-gateway.md." }, 503);
 
