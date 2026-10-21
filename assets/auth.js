@@ -43,7 +43,7 @@
     emailButton.disabled = true;
     say("جارٍ إرسال رابط الدخول…");
     try {
-      const result = await client().auth.signInWithOtp({email, options:{emailRedirectTo:redirect(), shouldCreateUser:false}});
+      const result = await client().auth.signInWithOtp({email, options:{emailRedirectTo:redirect(), shouldCreateUser: false}});
       if (result.error) throw result.error;
       say("إذا كان البريد مسجّلًا ومصرّحًا له، فستصلك رسالة دخول. لن يُنشأ حساب جديد.");
     } catch (_) {
