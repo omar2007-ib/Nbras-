@@ -60,7 +60,8 @@
       say("تعذر إكمال جلسة الدخول. تحقق من إعدادات OAuth وعناوين الرجوع في Supabase.", true);
     }
   })();
-\n  document.querySelector("#google-sign-in")?.addEventListener("click", e => oauth("google", e.currentTarget));
+
+  document.querySelector("#google-sign-in")?.addEventListener("click", e => oauth("google", e.currentTarget));
   document.querySelector("#apple-sign-in")?.addEventListener("click", e => oauth("apple", e.currentTarget));
   form.addEventListener("submit", async event => {
     event.preventDefault();
