@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
   const userPrompt = `المطلوب: ${count} سؤالًا. القسم: ${category}. الصعوبة: ${difficulty}. المهمة: ${mode}\n\nالمصدر:\n${sourceText}`;
   const endpoint = baseUrl + "/chat/completions";
   const messages = [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }];
-  const requestBody = { model, temperature: 0.25, response_format: { type: "json_object" }, messages };
+  const requestBody = { model, temperature: 0.25, max_tokens: 6000, response_format: { type: "json_object" }, messages };
   let aiResponse: Response;
   try {
     aiResponse = await fetch(endpoint, {
@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
       aiResponse = await fetch(endpoint, {
         method: "POST",
         headers: { Authorization: `Bearer ${aiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, temperature: 0.25, messages }),
+        body: JSON.stringify({ model, temperature: 0.25, max_tokens: 6000, messages }),
         signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
       });
     }
@@ -118,14 +118,38 @@ Deno.serve(async (req: Request) => {
     console.error("LLM gateway error", providerName, aiResponse.status, details.slice(0, 500));
     return reply({ error: "تعذّر التوليد من " + providerName + ". تحقق من عنوان API والمفتاح والنموذج وحدود الاستخدام لدى المزوّد." }, 502);
   }
-  const completion = await aiResponse.json();
-  let parsed: any;
-  try { parsed = JSON.parse(completion.choices?.[0]?.message?.content || "{}"); }
-  catch { return reply({ error: "لم يُرجع النموذج صيغة أسئلة قابلة للقراءة. أعد المحاولة." }, 502); }
-  const questions = Array.isArray(parsed.questions) ? parsed.questions.slice(0, count) : [];
+  let completion: unknown;
+  try {
+    completion = await aiResponse.json();
+  } catch {
+    return reply({ error: "وصل رد غير صالح من مزوّد الذكاء الاصطناعي." }, 502);
+  }
+  const completionObject = completion && typeof completion === "object" && !Array.isArray(completion)
+    ? completion as { choices?: Array<{ message?: { content?: unknown } }> }
+    : null;
+  const completionText = completionObject?.choices?.[0]?.message?.content;
+  if (typeof completionText !== "string" || !completionText.trim()) {
+    return reply({ error: "لم يُرجع النموذج محتوى أسئلة قابلًا للقراءة. أعد المحاولة." }, 502);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(completionText);
+  } catch {
+    return reply({ error: "لم يُرجع النموذج صيغة أسئلة قابلة للقراءة. أعد المحاولة." }, 502);
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return reply({ error: "تنسيق الأسئلة الذي أعاده النموذج غير صالح." }, 502);
+  }
+
+  const rawQuestions = (parsed as { questions?: unknown }).questions;
+  const questions = Array.isArray(rawQuestions) ? rawQuestions.slice(0, count) : [];
   const valid = questions.filter((q: any) =>
-    typeof q.question === "string" && q.question.trim() &&
-    Array.isArray(q.options) && q.options.length === 4 && q.options.every((v: unknown) => typeof v === "string" && v.trim()) &&
+    q && typeof q === "object" && !Array.isArray(q) &&
+    typeof q.question === "string" && q.question.trim().length > 0 && q.question.length <= 1500 &&
+    Array.isArray(q.options) && q.options.length === 4 &&
+    q.options.every((v: unknown) => typeof v === "string" && v.trim().length > 0 && v.length <= 500) &&
+    new Set(q.options.map((v: string) => v.trim().normalize("NFKC").toLowerCase())).size === 4 &&
     Number.isInteger(q.correct) && q.correct >= 0 && q.correct < 4
   ).map((q: any) => ({
     question: q.question.trim(),
@@ -133,7 +157,7 @@ Deno.serve(async (req: Request) => {
     correct: q.correct,
     category,
     difficulty: ["سهل", "متوسط", "صعب"].includes(q.difficulty) ? q.difficulty : (difficulty === "متدرج" ? "متوسط" : difficulty),
-    explanation: typeof q.explanation === "string" ? q.explanation.trim() : "",
+    explanation: typeof q.explanation === "string" ? q.explanation.trim().slice(0, 2500) : "",
   }));
   if (!valid.length) return reply({ error: "لم ينتج النموذج أسئلة صحيحة. جرّب مصدرًا أوضح." }, 502);
   return reply({ questions: valid, generated: valid.length, reviewRequired: true });
