@@ -22,7 +22,7 @@ Deno.serve(async (req: Request) => {
   // OpenAI-compatible gateway: configure a provider from the free-LLM directory.
   // Provider API keys stay server-side and are never shipped to the browser.
   const aiKey = Deno.env.get("LLM_API_KEY") || Deno.env.get("OPENAI_API_KEY");
-  const baseUrl = (Deno.env.get("LLM_BASE_URL") || "https://api.openai.com/v1").replace(/\\/+$/, "");
+  const baseUrl = (Deno.env.get("LLM_BASE_URL") || "https://api.openai.com/v1").replace(/\/+$/, "");
   const model = Deno.env.get("LLM_MODEL") || Deno.env.get("OPENAI_MODEL") || "gpt-4o-mini";
   const providerName = Deno.env.get("LLM_PROVIDER") || (Deno.env.get("OPENAI_API_KEY") ? "OpenAI" : "مزود متوافق مع OpenAI");
   if (!supabaseUrl || !anonKey) return reply({ error: "إعدادات Supabase غير مكتملة." }, 500);
