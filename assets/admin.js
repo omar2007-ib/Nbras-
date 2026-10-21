@@ -66,11 +66,27 @@
     if (error) { say("تعذر تحميل المحتوى: " + error.message, true); return; }
     rows = data || [];
     render();
+    const dashboardStatus = $("#dashboard-status");
+    if (dashboardStatus) dashboardStatus.textContent = "تم تحديث بيانات المحتوى من قاعدة البيانات.";
+    const publishedCount = $("#published-count");
+    if (publishedCount) publishedCount.textContent = String(rows.filter(x => x.is_published).length);
+    const mcqCount = $("#mcq-count");
+    if (mcqCount) {
+      const { count, error: countError } = await client.from("mcq_questions").select("id", { count: "exact", head: true });
+      mcqCount.textContent = countError ? "غير متاح" : String(count || 0);
+    }
     say("تم تحميل " + rows.length + " عنصر من قاعدة البيانات.");
   }
   function render() {
     table.replaceChildren();
-    for (const row of rows) {
+    const term = String($("#search")?.value || "").trim().toLocaleLowerCase("ar");
+    const selectedCourse = $("#filter-course")?.value || "";
+    const visibleRows = rows.filter(row => {
+      const haystack = [row.title, row.description, row.content_type, row.course_slug].join(" ").toLocaleLowerCase("ar");
+      const courseName = row.course_slug === "tasees" ? "تأسيس" : "تدريبات";
+      return (!term || haystack.includes(term)) && (!selectedCourse || selectedCourse === courseName);
+    });
+    for (const row of visibleRows) {
       const tr = document.createElement("tr");
       const cells = [
         row.title,
@@ -90,7 +106,8 @@
       del.textContent = "حذف"; del.addEventListener("click", () => removeRow(row));
       actions.append(publish, del); tr.append(actions); table.append(tr);
     }
-    empty.hidden = rows.length > 0;
+    empty.hidden = visibleRows.length > 0;
+    empty.textContent = rows.length ? "لا توجد نتائج تطابق البحث الحالي." : "لا يوجد محتوى مضاف حتى الآن.";
     $("#count").textContent = String(rows.length);
     $("#file-count").textContent = String(rows.filter(x => x.storage_path).length);
   }
@@ -158,5 +175,25 @@
     await loadContent();
     say("تم حذف المحتوى.");
   }
+  function download(name, type, text) {
+    const blob = new Blob([text], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = name;
+    document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+  function csvCell(value) { return '"' + String(value ?? "").replace(/"/g, '""') + '"'; }
+  $("#search")?.addEventListener("input", render);
+  $("#filter-course")?.addEventListener("change", render);
+  $("#export")?.addEventListener("click", () => {
+    const data = [["العنوان", "النوع", "الدورة", "الوصف", "حالة النشر", "مسار الملف", "تاريخ الإنشاء"], ...rows.map(row => [row.title, row.content_type, row.course_slug === "tasees" ? "تأسيس" : "تدريبات", row.description, row.is_published ? "منشور" : "مسودة", row.storage_path, row.created_at])];
+    download("athar-content.csv", "text/csv;charset=utf-8", "\uFEFF" + data.map(row => row.map(csvCell).join(",")).join("\r\n"));
+    say("تم تجهيز ملف CSV للمحتوى المحمّل.");
+  });
+  function exportJson() {
+    download("athar-content-backup.json", "application/json;charset=utf-8", JSON.stringify({ exportedAt: new Date().toISOString(), itemCount: rows.length, items: rows }, null, 2));
+    say("تم تنزيل النسخة الاحتياطية الوصفية. الملفات نفسها لم تُنسخ.");
+  }
+  $("#backup-json")?.addEventListener("click", exportJson);
+  $("#backup-all-json")?.addEventListener("click", exportJson);
   start().catch(error => say("تعذر تهيئة لوحة الإدارة: " + error.message, true));
 })();

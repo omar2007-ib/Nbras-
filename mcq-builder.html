@@ -31,7 +31,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="choices">
 <div class="field"><label for="source-pdf">ملف PDF</label><input id="source-pdf" type="file" accept="application/pdf,.pdf"></div>
 <div class="field"><label for="ai-count">عدد الأسئلة</label><input id="ai-count" type="number" min="1" max="30" value="5"></div>
-<div class="field"><label for="ai-category">القسم</label><select id="ai-category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<div class="field"><label for="ai-category">القسم</label><select id="ai-category"><option>كمي</option></select></div>
 <div class="field"><label for="ai-difficulty">الصعوبة</label><select id="ai-difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option><option>متدرج</option></select></div>
 <div class="field"><label for="ai-mode">طريقة الإنشاء</label><select id="ai-mode"><option value="generate">إنشاء أسئلة جديدة من المصدر</option><option value="extract">استخراج الأسئلة الموجودة في المصدر</option></select></div>
 </div>
@@ -53,7 +53,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 </div>
 <div class="field"><label for="correct">الإجابة الصحيحة</label><select id="correct"><option value="0">أ — الخيار الأول</option><option value="1">ب — الخيار الثاني</option><option value="2">ج — الخيار الثالث</option><option value="3">د — الخيار الرابع</option></select></div>
 <div class="choices">
-<div class="field"><label for="category">التصنيف</label><select id="category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<div class="field"><label for="category">التصنيف</label><select id="category"><option>كمي</option></select></div>
 <div class="field"><label for="difficulty">مستوى الصعوبة</label><select id="difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option></select></div>
 </div>
 <div class="field"><label for="explanation">شرح الإجابة (اختياري)</label><textarea id="explanation" maxlength="1500" placeholder="اكتب طريقة الحل أو سبب صحة الإجابة..."></textarea></div>
@@ -67,7 +67,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="stats"><span class="stat">عدد الأسئلة: <strong id="count">0</strong></span><span class="stat">تخزين محلي</span></div>
 <div class="field"><label for="search">البحث في الأسئلة</label><input id="search" type="search" placeholder="ابحث بكلمة من السؤال..."></div>
 <div class="choices">
-<div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">الكل</option><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
+<div class="field"><label for="filter-category">التصنيف</label><select id="filter-category"><option value="">كل أسئلة الكمي</option><option>كمي</option></select></div>
 <div class="field"><label for="filter-difficulty">الصعوبة</label><select id="filter-difficulty"><option value="">الكل</option><option>سهل</option><option>متوسط</option><option>صعب</option></select></div>
 </div>
 <div class="actions" style="margin:0 0 15px"><a class="btn" href="exam.html" style="text-decoration:none">ابدأ اختبارًا مؤقتًا</a><button class="btn dark" id="export-json" type="button">تصدير JSON</button><button class="btn light" id="export-csv" type="button">تصدير CSV</button><button class="btn light" id="import-button" type="button">استيراد JSON</button><label class="sr-only" for="import-file">اختر ملف أسئلة JSON للاستيراد</label><input class="hidden" id="import-file" aria-label="اختر ملف أسئلة JSON للاستيراد" type="file" accept=".json,application/json"><button class="btn danger" id="clear-all" type="button">إعادة تحميل بنك السحابة</button></div>
@@ -186,15 +186,19 @@ generate.addEventListener('click',async()=>{
  const cfg=window.ATHAR_SUPABASE_CONFIG;
  const res=await fetch(cfg.url+'/functions/v1/generate-mcq',{method:'POST',headers:{'Content-Type':'application/json','apikey':cfg.publishableKey,'Authorization':'Bearer '+(await ctx.client.auth.getSession()).data.session.access_token},body:JSON.stringify({text,count:Number(document.getElementById('ai-count').value),category:document.getElementById('ai-category').value,difficulty:document.getElementById('ai-difficulty').value,mode:document.getElementById('ai-mode').value})});
  const data=await res.json();if(!res.ok)throw new Error(data.error||'تعذر توليد الأسئلة.');
- drafts=data.questions||[];const labels=['أ','ب','ج','د'];
+ const requested=Math.max(1,Math.min(30,Number(document.getElementById('ai-count').value)||5));
+ const normalized=s=>String(s||'').normalize('NFKC').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+ const signatures=new Set((window.ATHAR_DB_QUESTIONS||[]).map(q=>normalized(q.question)+'|'+(q.options||[]).map(normalized).join('|')));
+ drafts=(Array.isArray(data.questions)?data.questions:[]).filter(q=>q&&typeof q.question==='string'&&q.question.trim()&&Array.isArray(q.options)&&q.options.length===4&&q.options.every(x=>typeof x==='string'&&x.trim())&&new Set(q.options.map(normalized)).size===4&&Number.isInteger(q.correct)&&q.correct>=0&&q.correct<4).filter(q=>{const sig=normalized(q.question)+'|'+q.options.map(normalized).join('|');if(signatures.has(sig))return false;signatures.add(sig);return true}).slice(0,requested);if(!drafts.length)throw new Error('لم ينتج النموذج أسئلة جديدة وصحيحة؛ جرّب نصًا أوضح أو مختلفًا.');const labels=['أ','ب','ج','د'];
  drafts.forEach((q,i)=>{const card=document.createElement('article');card.className='q-card';const h=document.createElement('h3');h.textContent=(i+1)+'. '+q.question;card.append(h);q.options.forEach((o,j)=>{const p=document.createElement('div');p.className='option'+(j===q.correct?' correct':'');p.textContent=labels[j]+' — '+o+(j===q.correct?' ✓':'');card.append(p)});if(q.explanation){const p=document.createElement('p');p.className='muted';p.textContent='الشرح: '+q.explanation;card.append(p)}preview.append(card)});
  approve.disabled=!drafts.length;say('تم إنشاء '+drafts.length+' مسودة. راجع صحة الإجابات قبل اعتمادها.');
  }catch(e){say(e.message||'حدث خطأ أثناء التوليد.',true)}finally{generate.disabled=false}
 });
 approve.addEventListener('click',async()=>{
  const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx||!drafts.length)return;
- approve.disabled=true;say('جارٍ حفظ الأسئلة في قاعدة البيانات...');
- const records=drafts.map(q=>({question:q.question,options:q.options,correct_index:q.correct,category:q.category,difficulty:['سهل','متوسط','صعب'].includes(q.difficulty)?q.difficulty:'متوسط',explanation:q.explanation||'',created_by:ctx.user.id,status:'approved',source_name:pdfInput.files?.[0]?.name||'نص مدخل يدويًا'}));
+ approve.disabled=true;say('جارٍ فحص التكرار ثم حفظ الأسئلة في قاعدة البيانات...');
+ const records=drafts.filter(q=>!(window.ATHAR_DB_QUESTIONS||[]).some(old=>String(old.question||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar')===String(q.question||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar'))).map(q=>({question:q.question,options:q.options,correct_index:q.correct,category:'كمي',difficulty:['سهل','متوسط','صعب'].includes(q.difficulty)?q.difficulty:'متوسط',explanation:q.explanation||'',created_by:ctx.user.id,status:'approved',source_name:pdfInput.files?.[0]?.name||'نص مدخل يدويًا'}));
+ if(!records.length){say('لم تُحفظ أي أسئلة لأن جميعها مكرر بالفعل.');drafts=[];approve.disabled=true;return;}
  const {data,error}=await ctx.client.from('mcq_questions').insert(records).select('id,question,options,correct_index,category,difficulty,explanation,created_at,status');
  if(error){say('تعذّر حفظ الأسئلة: '+error.message,true);approve.disabled=false;return}
  const local=data.map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));
