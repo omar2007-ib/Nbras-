@@ -35,6 +35,13 @@ if public.is_dir():
     # Public-folder files are served from the site root by Netlify conventions.
     shutil.copytree(public, OUT, dirs_exist_ok=True)
 
+# Publish only the specific non-secret guide linked from the public LLM provider page.
+llm_guide = ROOT / "docs" / "implementation" / "llm-provider-gateway.md"
+if llm_guide.exists():
+    guide_out = OUT / "docs" / "implementation"
+    guide_out.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(llm_guide, guide_out / llm_guide.name)
+
 robots = ROOT / "robots.txt"
 if robots.exists():
     shutil.copy2(robots, OUT / "robots.txt")
