@@ -35,8 +35,15 @@ function reply(body: unknown, status = 200, origin: string | null = null, extraH
   });
 }
 
-async function sha256(value: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+async function hmacSha256(secret: string, value: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -48,7 +55,7 @@ async function consumeRateLimit(
   limit: number,
   windowSeconds: number,
 ): Promise<{ allowed: boolean; remaining: number; resetAt: string } | null> {
-  const keyHash = await sha256(`athar-assistant:${suffix}:${ip}`);
+  const keyHash = await hmacSha256(serviceKey, `athar-assistant:${suffix}:${ip}`);
   const response = await fetch(`${serviceUrl}/rest/v1/rpc/consume_athar_assistant_rate_limit`, {
     method: "POST",
     headers: {
