@@ -29,6 +29,10 @@ for page in ROOT.glob("*.html"):
             html = html.replace("</head>", f"  {premium_stylesheet}\n</head>", 1)
         else:
             html = premium_stylesheet + "\n" + html
+    assistant_scripts = '<script defer src="assets/supabase-config.js"></script>\\n<script defer src="assets/athar-assistant.js"></script>'
+    if "assets/athar-assistant.js" not in html and "</body>" in html:
+        html = html.replace("</body>", f"{assistant_scripts}\\n</body>", 1)
+
     destination.write_text(html, encoding="utf-8")
 
 assets = ROOT / "assets"
