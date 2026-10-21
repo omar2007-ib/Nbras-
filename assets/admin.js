@@ -97,13 +97,20 @@
       ];
       for (const value of cells) { const td = document.createElement("td"); td.textContent = value; tr.append(td); }
       const actions = document.createElement("td");
+      if (row.storage_path) {
+        const preview = document.createElement("button");
+        preview.type = "button"; preview.className = "btn small-btn";
+        preview.textContent = row.content_type === "video" ? "مشاهدة" : "فتح الملف";
+        preview.addEventListener("click", () => previewFile(row, preview));
+        actions.append(preview);
+      }
       const publish = document.createElement("button");
       publish.type = "button"; publish.className = "btn small-btn";
       publish.textContent = row.is_published ? "إلغاء النشر" : "نشر";
-      publish.addEventListener("click", () => setPublished(row, !row.is_published));
+      publish.addEventListener("click", () => setPublished(row, !row.is_published, publish));
       const del = document.createElement("button");
       del.type = "button"; del.className = "btn small-btn"; del.style.marginInlineStart = "6px";
-      del.textContent = "حذف"; del.addEventListener("click", () => removeRow(row));
+      del.textContent = "حذف"; del.addEventListener("click", () => removeRow(row, del));
       actions.append(publish, del); tr.append(actions); table.append(tr);
     }
     empty.hidden = visibleRows.length > 0;
@@ -122,11 +129,15 @@
     if (!title) return say("اكتب عنوان المحتوى أولاً.", true);
     if (!files.length && kind !== "link") return say("اختر ملفاً أو أكثر لرفعه. الروابط الخارجية ستُضاف في خطوة لاحقة.", true);
     if (files.some(file => file.size > MAX_FILE_SIZE)) return say("حجم كل ملف يجب ألا يتجاوز 50 ميجابايت في إعداد التخزين الحالي.", true);
-    if (files.some(file => !allowedFile(file, kind))) return say("نوع ملف غير مسموح لهذا النوع من المحتوى. المسموح: PDF والصور المعتمدة والفيديو MP4/WebM.", true);
+    if (files.some(file => !allowedFile(file, kind))) return say("نوع الملف لا يطابق التصنيف المختار. اختر فيديو لـ MP4/WebM أو PDF أو ورقة تدريب للملفات والصور المناسبة.", true);
+    if (files.length > 20) return say("يمكن رفع 20 ملفًا كحد أقصى في العملية الواحدة.", true);
     submit.disabled = true;
+    const fileInput = $("#files");
+    if (fileInput) fileInput.disabled = true;
+    let uploaded = 0;
+    let failedFile = "";
     try {
       if (!files.length) throw new Error("لا يوجد ملف محدد.");
-      let uploaded = 0;
       for (const [index, file] of files.entries()) {
         const safeName = file.name.normalize("NFKC").replace(/[^\p{L}\p{N}._-]+/gu, "-").slice(-100) || "file";
         const path = course + "/" + user.id + "/" + crypto.randomUUID() + "-" + safeName;
@@ -134,7 +145,7 @@
           cacheControl: "3600", upsert: false, contentType: file.type || "application/octet-stream"
         });
         if (uploadError) throw uploadError;
-        const contentType = kind === "video" ? "video" : kind === "pdf" ? "pdf" : kind === "worksheet" ? "worksheet" : "lesson";
+        const contentType = inferContentType(file, kind);
         const { error: insertError } = await client.from("course_content").insert({
           course_slug: course,
           title: files.length > 1 ? title + " — " + file.name : title,
@@ -146,34 +157,72 @@
           throw insertError;
         }
         uploaded++;
-        say("تم رفع " + uploaded + " من " + files.length + " ملف…");
+        say("جارٍ الرفع: " + uploaded + " من " + files.length + " ملف — " + Math.round(uploaded / files.length * 100) + "%");
       }
       form.reset();
       await loadContent();
-      say("اكتمل رفع " + uploaded + " ملف إلى التخزين الخاص وربطه بقاعدة البيانات.");
+      say("اكتمل رفع " + uploaded + " ملف بنجاح. الملفات محفوظة في التخزين الخاص.");
     } catch (error) {
-      say("تعذر إكمال الرفع: " + (error?.message || "خطأ غير معروف"), true);
-    } finally { submit.disabled = false; }
+      failedFile = files[uploaded]?.name || "";
+      await loadContent();
+      const partial = uploaded ? " نجح رفع " + uploaded + " ملف، ولم يكتمل باقي الرفع." : "لم يتم رفع أي ملف.";
+      say(partial + (failedFile ? " الملف المتعثر: " + failedFile + "." : "") + " السبب: " + (error?.message || "خطأ غير معروف"), true);
+    } finally {
+      submit.disabled = false;
+      if (fileInput) fileInput.disabled = false;
+    }
   }
   function allowedFile(file, kind) {
-    const allowed = kind === "video" ? MIME.video : kind === "pdf" ? MIME.pdf : kind === "worksheet" ? MIME.worksheet : [...MIME.pdf, ...MIME.video, ...MIME.image];
-    return allowed.includes(file.type);
+    const allowedByKind = {
+      video: MIME.video, pdf: MIME.pdf, worksheet: MIME.worksheet,
+      lesson: [...MIME.pdf, ...MIME.image],
+      other: [...MIME.pdf, ...MIME.video, ...MIME.image]
+    };
+    return (allowedByKind[kind] || []).includes(file.type);
   }
-  async function setPublished(row, value) {
+  function inferContentType(file, kind) {
+    if (kind === "video" || MIME.video.includes(file.type)) return "video";
+    if (kind === "pdf" || file.type === "application/pdf") return "pdf";
+    if (kind === "worksheet") return "worksheet";
+    return "lesson";
+  }
+  async function previewFile(row, button) {
+    button.disabled = true;
+    try {
+      const { data, error } = await client.storage.from("athar-content").createSignedUrl(row.storage_path, 300, { download: false });
+      if (error) throw error;
+      if (!data?.signedUrl) throw new Error("لم يتم إنشاء رابط معاينة آمن.");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      say("تم إنشاء رابط معاينة مؤقت صالح لمدة 5 دقائق.");
+    } catch (error) {
+      say("تعذرت معاينة الملف: " + (error?.message || "خطأ غير معروف"), true);
+    } finally { button.disabled = false; }
+  }
+  async function setPublished(row, value, button) {
+    if (button) button.disabled = true;
     const { error } = await client.from("course_content").update({ is_published: value, updated_at: new Date().toISOString() }).eq("id", row.id);
+    if (button) button.disabled = false;
     if (error) return say("تعذر تحديث حالة النشر: " + error.message, true);
     await loadContent();
+    say(value ? "تم نشر المحتوى." : "تم إلغاء النشر؛ المحتوى محفوظ كمسودة.");
   }
-  async function removeRow(row) {
-    if (!confirm("هل تريد حذف هذا المحتوى؟ لا يمكن التراجع عن الحذف.")) return;
-    if (row.storage_path) {
-      const { error } = await client.storage.from("athar-content").remove([row.storage_path]);
-      if (error) return say("تعذر حذف الملف من التخزين: " + error.message, true);
+  async function removeRow(row, button) {
+    if (!confirm("هل تريد حذف هذا المحتوى نهائيًا؟ لا يمكن التراجع عن الحذف.")) return;
+    if (button) button.disabled = true;
+    const { error: deleteError } = await client.from("course_content").delete().eq("id", row.id);
+    if (deleteError) {
+      if (button) button.disabled = false;
+      return say("تعذر حذف سجل المحتوى: " + deleteError.message, true);
     }
-    const { error } = await client.from("course_content").delete().eq("id", row.id);
-    if (error) return say("تعذر حذف سجل المحتوى: " + error.message, true);
+    if (row.storage_path) {
+      const { error: storageError } = await client.storage.from("athar-content").remove([row.storage_path]);
+      if (storageError) {
+        await loadContent();
+        return say("حُذف سجل المحتوى لكن تعذر تنظيف الملف من التخزين: " + storageError.message, true);
+      }
+    }
     await loadContent();
-    say("تم حذف المحتوى.");
+    say("تم حذف المحتوى وسجلّه من المكتبة.");
   }
   function download(name, type, text) {
     const blob = new Blob([text], { type });
