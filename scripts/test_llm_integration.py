@@ -15,6 +15,7 @@ auth = read("assets/auth.js")
 admin = read("assets/admin.js")
 admin_page = read("admin.html")
 function = read("supabase/functions/generate-mcq/index.ts")
+assistant_function = read("supabase/functions/athar-assistant/index.ts")
 readme = read("README.md")
 build = read("scripts/build_static.py")
 setup = read("docs/implementation/llm-provider-gateway.md")
@@ -50,4 +51,10 @@ assert 'includes(profiles[0].role)' in function and '"owner", "admin"' in functi
 assert "LLM_API_KEY" in setup and "لا تضع أي مفتاح" in setup, "Provider secrets and secret-safety rules must be documented."
 assert "llm-providers.html" in readme and "LLM_BASE_URL" in readme, "README must document the live integration architecture."
 assert "لا يوفّر مفتاح API" in page, "The page must explain that the upstream directory is not a unified API."
-print("ATHAR LLM integration and MCQ builder static regression checks passed.")
+
+assert 'Deno.env.get("GROQ_API_KEY")' in assistant_function, "Assistant must accept a provider-specific Groq secret."
+assert 'https://api.groq.com/openai/v1' in assistant_function, "Groq must use its OpenAI-compatible API base by default."
+assert 'openai/gpt-oss-20b' in assistant_function, "Groq fallback model must be configured when GROQ_API_KEY is used."
+assert "response.status === 402" in assistant_function and "الرصيد أو حدود الحساب (402)" in assistant_function, "Provider quota failures must produce actionable Arabic feedback."
+assert "response.status === 429" in assistant_function, "Provider rate limits must be reported distinctly."
+print("ATHAR LLM integration, Groq fallback, and MCQ builder static regression checks passed.")
