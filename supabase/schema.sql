@@ -74,8 +74,10 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
-grant select on public.course_content to anon, authenticated;
-grant insert, update, delete on public.course_content to authenticated;
+-- Least privilege: RLS controls rows; SQL grants expose only the operations the app needs.
+revoke all privileges on table public.course_content from anon, authenticated;
+grant select on table public.course_content to anon, authenticated;
+grant insert, update, delete on table public.course_content to authenticated;
 
 drop policy if exists "published_content_read" on public.course_content;
 create policy "published_content_read" on public.course_content
