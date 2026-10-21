@@ -31,5 +31,7 @@ jobs:
         run: python scripts/test_assistant_frontend.py
       - name: Test owner QR and camera scanner regressions
         run: python scripts/test_auth_qr.py
+      - name: Test admin action recovery after network failures
+        run: python scripts/test_admin_action_recovery.py
       - name: Build and validate deployment output
         run: python scripts/validate_static_site.py
