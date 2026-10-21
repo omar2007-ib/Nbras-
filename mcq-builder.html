@@ -25,22 +25,6 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <main class="wrap" id="mcq-main" style="display:none">
 <section class="intro"><h1>صانع أسئلة الاختيار من متعدد</h1><p>أنشئ أسئلتك بنفسك، حدّد الإجابة الصحيحة، ثم راجع بنك الأسئلة وصدّره لحفظ نسخة احتياطية.</p></section>
 
-<section class="panel" style="margin-bottom:20px">
-<h2>مولّد الأسئلة الذكي من PDF أو النص</h2>
-<p class="muted">ارفع ملف PDF أو الصق محتوى يدويًا. ستُنشأ مسودات MCQ للمراجعة قبل إضافتها إلى بنك الأسئلة. متاح لحساب المالك/المدير بعد تسجيل الدخول.</p>
-<div class="choices">
-<div class="field"><label for="source-pdf">ملف PDF</label><input id="source-pdf" type="file" accept="application/pdf,.pdf"></div>
-<div class="field"><label for="ai-count">عدد الأسئلة (1–30)</label><input id="ai-count" type="number" min="1" max="30" value="5"></div>
-<div class="field"><label for="ai-category">القسم</label><select id="ai-category"><option>كمي</option><option>لفظي</option><option>عام</option></select></div>
-<div class="field"><label for="ai-difficulty">الصعوبة</label><select id="ai-difficulty"><option>سهل</option><option selected>متوسط</option><option>صعب</option><option>متدرج</option></select></div>
-<div class="field"><label for="ai-mode">المطلوب</label><select id="ai-mode"><option value="generate">توليد أسئلة جديدة من المحتوى</option><option value="extract">استخراج الأسئلة الموجودة في المصدر</option></select></div>
-</div>
-<div class="field"><label for="source-text">أو الصق نصًا/ملاحظات هنا</label><textarea id="source-text" maxlength="30000" style="min-height:150px" placeholder="الصق شرح الدرس أو نص PDF هنا..."></textarea></div>
-<div class="actions"><button class="btn dark" id="extract-pdf" type="button">استخراج نص PDF</button><button class="btn" id="generate-ai" type="button">توليد الأسئلة</button><button class="btn light" id="approve-ai" type="button" disabled>اعتماد المسودات وإضافتها للبنك</button></div>
-<p id="ai-status" class="status" role="status" aria-live="polite"></p>
-<div id="ai-preview" class="q-list"></div>
-</section>
-\n
 <section class="panel" style="margin-bottom:20px;border-top:4px solid #D4AF37">
 <h2>مولّد الأسئلة الذكي من PDF أو النص</h2>
 <p class="muted">اختر ملف PDF قابلًا لاستخراج النص أو الصق نص الدرس. ستظهر مسودات للاطلاع عليها قبل حفظها في بنك الأسئلة السحابي.</p>
@@ -55,7 +39,8 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="actions"><button class="btn light" id="extract-pdf" type="button">استخراج نص PDF</button><button class="btn dark" id="generate-ai" type="button">توليد الأسئلة</button><button class="btn" id="approve-ai" type="button" disabled>اعتماد وحفظ في قاعدة البيانات</button></div>
 <p id="ai-status" class="status" role="status" aria-live="polite"></p><div id="ai-preview" class="q-list"></div>
 </section>
-\n<div class="layout">
+
+<div class="layout">
 <section class="panel">
 <h2>إضافة سؤال جديد</h2>
 <form id="question-form">
@@ -75,7 +60,7 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 <div class="actions"><button class="btn" type="submit">حفظ السؤال</button><button class="btn light" type="reset">تفريغ الحقول</button></div>
 <p id="form-status" class="status" role="status" aria-live="polite"></p>
 </form>
-<p class="muted">تنبيه: تُحفظ الأسئلة محليًا في هذا المتصفح على هذا الجهاز، ولا تظهر تلقائيًا للمدرس أو لطلاب آخرين.</p>
+<p class="muted">تُحفظ الأسئلة في بنك أثَر السحابي لحساب المالك/المدير، مع نسخة محلية مساعدة على هذا الجهاز.</p>
 </section>
 <section class="panel">
 <h2>بنك الأسئلة</h2>
@@ -92,6 +77,9 @@ a,button{cursor:pointer}.btn{min-height:44px;transition:background-color .18s ea
 </div>
 </main>
 <footer>أثَر — بنك أسئلة محمي مرتبط بقاعدة البيانات</footer>
+<script src="assets/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 (function(){
 const KEY='athar-mcq-questions-v1';
@@ -127,14 +115,22 @@ const question=document.getElementById('question').value.trim();
 const options=[0,1,2,3].map(i=>document.getElementById('option'+i).value.trim());
 if(!question||options.some(x=>!x)){status.textContent='أكمل نص السؤال والخيارات الأربعة.';return}
 const q={id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9),question,options,correct:Number(document.getElementById('correct').value),category:document.getElementById('category').value,difficulty:document.getElementById('difficulty').value,explanation:document.getElementById('explanation').value.trim(),createdAt:new Date().toISOString()};
+const ctx=window.ATHAR_STAFF_CONTEXT;
+if(!ctx){status.textContent='انتهت جلسة الإدارة. سجّل الدخول مجددًا.';return}
+try{
+ const {data:saved,error}=await ctx.client.from('mcq_questions').insert({question:q.question,options:q.options,correct_index:q.correct,category:q.category,difficulty:q.difficulty,explanation:q.explanation,created_by:ctx.user.id,status:'approved'}).select('id,created_at').single();
+ if(error)throw error;
+ q.id=saved.id;q.createdAt=saved.created_at;q.status='approved';
+}catch(error){status.textContent='تعذّر حفظ السؤال في قاعدة البيانات: '+(error.message||'تحقق من الصلاحيات والاتصال.');return}
 questions.unshift(q);
-if(save()){render();form.reset();status.textContent='تم حفظ السؤال بنجاح.';document.getElementById('question').focus()}else{questions=questions.filter(item=>item.id!==q.id);status.textContent='تعذّر حفظ السؤال. لم يُضف إلى البنك.'}
+if(save()){render();form.reset();status.textContent='تم حفظ السؤال في بنك أثَر السحابي.';document.getElementById('question').focus()}else{questions=questions.filter(item=>item.id!==q.id);status.textContent='تم الحفظ السحابي، لكن تعذّر تحديث النسخة المحلية.'}
 });
 ['search','filter-category','filter-difficulty'].forEach(id=>document.getElementById(id).addEventListener(id==='search'?'input':'change',render));
 function download(name,type,data){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 document.getElementById('export-json').addEventListener('click',()=>{download('athar-mcq-questions.json','application/json;charset=utf-8',JSON.stringify(questions,null,2));bankStatus.textContent='تم تجهيز ملف JSON للتنزيل.'});
 function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
-document.getElementById('export-csv').addEventListener('click',()=>{const rows=[['السؤال','الخيار أ','الخيار ب','الخيار ج','الخيار د','رقم الإجابة الصحيحة (0-3)','التصنيف','الصعوبة','الشرح'],...questions.map(q=>[q.question,...q.options,q.correct,q.category,q.difficulty,q.explanation])];download('athar-mcq-questions.csv','text/csv;charset=utf-8','\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n'));bankStatus.textContent='تم تجهيز ملف CSV للتنزيل.'});
+document.getElementById('export-csv').addEventListener('click',()=>{const rows=[['السؤال','الخيار أ','الخيار ب','الخيار ج','الخيار د','رقم الإجابة الصحيحة (0-3)','التصنيف','الصعوبة','الشرح'],...questions.map(q=>[q.question,...q.options,q.correct,q.category,q.difficulty,q.explanation])];download('athar-mcq-questions.csv','text/csv;charset=utf-8','\uFEFF'+rows.map(r=>r.map(csvCell).join(',')).join('\r
+'));bankStatus.textContent='تم تجهيز ملف CSV للتنزيل.'});
 document.getElementById('clear-all').addEventListener('click',async()=>{const ctx=window.ATHAR_STAFF_CONTEXT;if(!ctx){bankStatus.textContent='سجّل الدخول مجددًا.';return}bankStatus.textContent='جارٍ إعادة تحميل بنك الأسئلة من قاعدة البيانات...';const {data,error}=await ctx.client.from('mcq_questions').select('id,question,options,correct_index,category,difficulty,explanation,created_at,status').order('created_at',{ascending:false}).limit(500);if(error){bankStatus.textContent='تعذرت إعادة التحميل: '+error.message;return}questions=(data||[]).map(q=>({id:q.id,question:q.question,options:q.options,correct:q.correct_index,category:q.category,difficulty:q.difficulty,explanation:q.explanation||'',createdAt:q.created_at,status:q.status}));window.ATHAR_DB_QUESTIONS=questions;save();render();bankStatus.textContent='تمت إعادة تحميل '+questions.length+' سؤالًا من بنك السحابة.'});
 const importFile=document.getElementById('import-file');
 document.getElementById('import-button').addEventListener('click',()=>importFile.click());
@@ -160,7 +156,8 @@ async function readPdf(){
  window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;const parts=[];
  for(let i=1;i<=Math.min(pdf.numPages,100);i++){const page=await pdf.getPage(i),content=await page.getTextContent();parts.push(content.items.map(x=>x.str||'').join(' '))}
- const text=parts.join('\n').trim();if(text.length<80)throw new Error('لم يُستخرج نص كافٍ؛ قد يكون PDF ممسوحًا كصور ويحتاج OCR.');
+ const text=parts.join('
+').trim();if(text.length<80)throw new Error('لم يُستخرج نص كافٍ؛ قد يكون PDF ممسوحًا كصور ويحتاج OCR.');
  textInput.value=text.slice(0,30000);return {pages:pdf.numPages,chars:text.length};
 }
 extract.addEventListener('click',async()=>{extract.disabled=true;say('جارٍ استخراج النص من PDF...');try{const r=await readPdf();say('تم استخراج النص من '+Math.min(r.pages,100)+' صفحة. اضغط توليد الأسئلة.')}catch(e){say(e.message||'تعذرت قراءة PDF.',true)}finally{extract.disabled=false}});
@@ -190,5 +187,26 @@ approve.addEventListener('click',async()=>{
 });
 })();
 </script>
-\n</body>
+<script>
+(async function protectMcqBuilder(){
+ const main=document.getElementById('mcq-main');
+ const cfg=window.ATHAR_SUPABASE_CONFIG||{};
+ const say=(text)=>{const el=document.getElementById('ai-status');if(el)el.textContent=text;};
+ if(!cfg.url||!cfg.publishableKey||!window.supabase?.createClient){say('إعدادات الاتصال غير مكتملة؛ لا يمكن فتح صانع الأسئلة.');return;}
+ const client=window.supabase.createClient(cfg.url,cfg.publishableKey);
+ const {data:{session},error:sessionError}=await client.auth.getSession();
+ if(sessionError||!session?.user){window.location.replace('auth.html?next=mcq-builder.html');return;}
+ const {data:profile,error:profileError}=await client.from('profiles').select('role').eq('id',session.user.id).maybeSingle();
+ if(profileError||!profile||!['owner','admin'].includes(profile.role)){
+  main.style.display='block';
+  main.innerHTML='<section class="panel"><h1>الوصول غير مسموح</h1><p>هذه الأداة متاحة لحساب المالك أو المدير فقط.</p><a class="btn" href="index.html">العودة للرئيسية</a></section>';
+  return;
+ }
+ window.ATHAR_STAFF_CONTEXT={client,user:session.user,profile};
+ main.style.display='block';
+ const reload=document.getElementById('clear-all');
+ if(reload)reload.click();
+})();
+</script>
+</body>
 </html>
