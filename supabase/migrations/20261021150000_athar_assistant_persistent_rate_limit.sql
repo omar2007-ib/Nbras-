@@ -39,7 +39,7 @@ begin
         then v_now else current_limit.window_started_at end,
       request_count = case
         when current_limit.window_started_at + pg_catalog.make_interval(secs => p_window_seconds) <= v_now
-        then 1 else pg_catalog.least(current_limit.request_count + 1, p_limit + 1) end,
+        then 1 when current_limit.request_count >= p_limit + 1 then p_limit + 1 else current_limit.request_count + 1 end,
       updated_at = v_now
   returning window_started_at, request_count into v_started, v_count;
 
@@ -50,7 +50,7 @@ begin
 
   return query select
     v_count <= p_limit,
-    pg_catalog.greatest(p_limit - v_count, 0),
+    case when v_count >= p_limit then 0 else p_limit - v_count end,
     v_started + pg_catalog.make_interval(secs => p_window_seconds);
 end;
 $$;
