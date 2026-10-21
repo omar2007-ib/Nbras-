@@ -12,6 +12,8 @@ def function_body(name, next_name):
         raise ValueError(f"Missing function: {name}")
     end = SOURCE.find(f"async function {next_name}(", start + 1)
     if end < 0:
+        end = SOURCE.find(f"function {next_name}(", start + 1)
+    if end < 0:
         raise ValueError(f"Missing next function boundary: {next_name}")
     return SOURCE[start:end]
 
