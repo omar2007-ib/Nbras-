@@ -239,11 +239,26 @@ Deno.serve(async (req: Request) => {
   }
 
   if (!response.ok) {
-    // Do not echo provider bodies or credentials into client responses/logs.
+    // Keep provider response bodies and credentials out of client responses/logs.
     console.error("Athar assistant provider error", provider, response.status);
     if (response.status === 401 || response.status === 403) {
       return reply({
         error: "رفض مزوّد الذكاء الاصطناعي بيانات المصادقة. تحقّق من صلاحية LLM_API_KEY ومن أن LLM_BASE_URL يطابق المزوّد الذي أصدر المفتاح.",
+      }, 503, origin);
+    }
+    if (response.status === 402) {
+      return reply({
+        error: "مزوّد الذكاء الاصطناعي رفض الطلب بسبب الرصيد أو حدود الحساب (402). راجع حدود المزوّد، أو استخدم مفتاحًا صالحًا، وتأكد من توافق LLM_BASE_URL وLLM_MODEL وLLM_PROVIDER.",
+      }, 503, origin);
+    }
+    if (response.status === 429) {
+      return reply({
+        error: "وصل مزوّد الذكاء الاصطناعي إلى حد الطلبات. انتظر قليلًا ثم أعد المحاولة.",
+      }, 429, origin, { "Retry-After": response.headers.get("Retry-After") || "30" });
+    }
+    if (response.status === 404) {
+      return reply({
+        error: "النموذج المحدد غير متاح لدى المزوّد. تحقّق من قيمة LLM_MODEL.",
       }, 503, origin);
     }
     return reply({
