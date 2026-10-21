@@ -10,7 +10,7 @@
 - يستدعي الكود `{LLM_BASE_URL}/chat/completions`؛ لذلك اختر فقط مزودًا يدعم هذه الصيغة، أو أضف adapter منفصلًا قبل ادعاء دعمه.
 - المفاتيح لا توضع في الواجهة ولا في GitHub؛ يجب حفظها كأسرار Supabase Edge Functions.
 
-## الإعداد
+## أمان الأسرار\nلا تضع أي مفتاح API في HTML أو ملفات JavaScript العامة أو GitHub. احفظ المفاتيح في Supabase Edge Function Secrets فقط.\n\n## الإعداد
 1. اختر مزوّدًا من الدليل، وأنشئ مفتاحًا وفق شروطه.
 2. من Supabase Dashboard → Edge Functions → Secrets، أضف:
    - `LLM_API_KEY`: المفتاح الخاص.
