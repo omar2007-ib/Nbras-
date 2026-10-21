@@ -5,6 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+const MAX_REQUEST_BYTES = 128 * 1024;
+const PROVIDER_TIMEOUT_MS = 45_000;
 
 function reply(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -47,8 +49,34 @@ Deno.serve(async (req: Request) => {
 
   if (!aiKey) return reply({ error: "بوابة نماذج اللغة غير مفعّلة. أضف LLM_API_KEY وLLM_BASE_URL وLLM_MODEL في أسرار Supabase، أو استخدم إعدادات OpenAI القديمة. راجع docs/implementation/llm-provider-gateway.md." }, 503);
 
+  const declaredLength = Number(req.headers.get("content-length") || 0);
+  if (declaredLength > MAX_REQUEST_BYTES) return reply({ error: "حجم الطلب أكبر من المسموح." }, 413);
+  let rawBody: string;
+  try {
+    const reader = req.body?.getReader();
+    if (!reader) return reply({ error: "الطلب فارغ أو غير صالح." }, 400);
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_REQUEST_BYTES) {
+        await reader.cancel().catch(() => undefined);
+        return reply({ error: "حجم الطلب أكبر من المسموح." }, 413);
+      }
+      chunks.push(value);
+    }
+    const bytes = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+    rawBody = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return reply({ error: "البيانات المرسلة غير صالحة أو ترميزها غير مدعوم." }, 400);
+  }
   let body: { text?: string; count?: number; category?: string; difficulty?: string; mode?: string };
-  try { body = await req.json(); } catch { return reply({ error: "البيانات المرسلة غير صالحة." }, 400); }
+  try { body = JSON.parse(rawBody); } catch { return reply({ error: "البيانات المرسلة غير صالحة." }, 400); }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return reply({ error: "البيانات المرسلة غير صالحة." }, 400);
   const sourceText = String(body.text || "").trim();
   const count = Math.max(1, Math.min(30, Math.floor(Number(body.count) || 5)));
   const category = "كمي"; // ATHAR currently supports quantitative aptitude only.
@@ -62,19 +90,28 @@ Deno.serve(async (req: Request) => {
   const endpoint = baseUrl + "/chat/completions";
   const messages = [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }];
   const requestBody = { model, temperature: 0.25, response_format: { type: "json_object" }, messages };
-  let aiResponse = await fetch(endpoint, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${aiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
-  // Some OpenAI-compatible providers/models do not implement JSON mode. Retry only
-  // on request-shape errors, without weakening authentication or response validation.
-  if (!aiResponse.ok && [400, 422].includes(aiResponse.status)) {
+  let aiResponse: Response;
+  try {
     aiResponse = await fetch(endpoint, {
       method: "POST",
       headers: { Authorization: `Bearer ${aiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, temperature: 0.25, messages }),
+      body: JSON.stringify(requestBody),
+      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     });
+    // Some OpenAI-compatible providers/models do not implement JSON mode. Retry only
+    // on request-shape errors, without weakening authentication or response validation.
+    if (!aiResponse.ok && [400, 422].includes(aiResponse.status)) {
+      aiResponse = await fetch(endpoint, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${aiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model, temperature: 0.25, messages }),
+        signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+      });
+    }
+  } catch (error) {
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    console.error("LLM gateway request failed", providerName, timedOut ? "timeout" : "network error");
+    return reply({ error: timedOut ? "استغرق التوليد وقتًا أطول من المتوقع. حاول مرة أخرى." : "تعذّر الاتصال بمزوّد الذكاء الاصطناعي. حاول مرة أخرى." }, 502);
   }
   if (!aiResponse.ok) {
     const details = await aiResponse.text();
