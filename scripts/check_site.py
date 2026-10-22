@@ -15,6 +15,7 @@ class PageParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.path = path
         self.ids = set()
+        self.duplicate_ids = set()
         self.links = []
         self.images = []
         self.labels_for = set()
@@ -37,6 +38,8 @@ class PageParser(HTMLParser):
             self.title_seen = True
             self.current_title = True
         if a.get("id"):
+            if a["id"] in self.ids:
+                self.duplicate_ids.add(a["id"])
             self.ids.add(a["id"])
         if tag in ("a", "link", "script", "img", "source") and a.get("href" if tag in ("a", "link") else "src"):
             attr = "href" if tag in ("a", "link") else "src"
@@ -95,6 +98,8 @@ for page in pages:
         errors.append(f"{rel}: HTML parsing failed: {exc}")
         continue
     parsed[page.resolve()] = parser
+    for duplicate_id in sorted(parser.duplicate_ids):
+        errors.append(f"{rel}: duplicate id {duplicate_id!r}; IDs must be unique for labels, fragments, and scripts.")
     if not parser.lang_ar:
         errors.append(f"{rel}: expected <html lang=\"ar\">.")
     if not parser.dir_rtl:
