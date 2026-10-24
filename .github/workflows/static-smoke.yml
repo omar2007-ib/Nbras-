@@ -21,5 +21,11 @@ jobs:
           python-version: "3.12"
       - name: Build and validate public pages
         run: python scripts/validate_static_site.py
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Check responsive layouts and keyboard focus at common viewport widths
+        run: python scripts/test_responsive_keyboard.py
       - name: Check MCQ answer-key isolation
         run: python scripts/check_mcq_security.py
