@@ -7,16 +7,12 @@ public HTML only; it does not authenticate or exercise protected backend flows.
 from pathlib import Path
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
-import os
-import sys
-import time
 
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 VIEWPORTS = (375, 768, 1024, 1440)
-MAX_TAB_STEPS = 24
 
 
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -50,19 +46,25 @@ def main():
                             viewport={"width": width, "height": 900},
                             device_scale_factor=1,
                         )
-                        page.on("pageerror", lambda error, path=route, w=width:
-                                page_errors.append(f"{path} @ {w}px: {error}"))
-                        response = page.goto(base_url + route, wait_until="networkidle", timeout=20000)
+                        page.on(
+                            "pageerror",
+                            lambda error, path=route, w=width:
+                                page_errors.append(f"{path} @ {w}px: {error}"),
+                        )
+                        response = page.goto(
+                            base_url + route, wait_until="load", timeout=20000
+                        )
                         checks += 1
                         if response is None or not response.ok:
-                            failures.append(f"{route} @ {width}px: page did not return a successful response.")
+                            failures.append(
+                                f"{route} @ {width}px: page did not return a successful response."
+                            )
                             page.close()
                             continue
 
                         overflow = page.evaluate(
                             "() => ({viewport: document.documentElement.clientWidth, "
-                            "content: document.documentElement.scrollWidth, "
-                            "body: document.body.scrollWidth})"
+                            "content: document.documentElement.scrollWidth})"
                         )
                         if overflow["content"] > overflow["viewport"] + 1:
                             failures.append(
@@ -70,8 +72,7 @@ def main():
                                 f"({overflow['content']}px content vs {overflow['viewport']}px viewport)."
                             )
 
-                        # Verify sequential keyboard navigation can focus an interactive control
-                        # and that the focused control has a visible focus indicator.
+                        # Smoke-test the first keyboard focus stop and its visible indicator.
                         page.keyboard.press("Tab")
                         focus = page.evaluate("""() => {
                           const el = document.activeElement;
@@ -81,37 +82,48 @@ def main():
                           const style = getComputedStyle(el);
                           const rect = el.getBoundingClientRect();
                           const interactive = el.matches('a[href],button,input,select,textarea,summary,[tabindex]:not([tabindex="-1"])');
-                          const visible = style.outlineStyle !== 'none' &&
-                            parseFloat(style.outlineWidth || '0') > 0 ||
+                          const visible = (style.outlineStyle !== 'none' &&
+                            parseFloat(style.outlineWidth || '0') > 0) ||
                             style.boxShadow !== 'none';
                           return {tag: el.tagName, visible, interactive,
-                            rect: {left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom}};
+                            rect: {left: rect.left, right: rect.right}};
                         }""")
                         if not focus["interactive"]:
-                            failures.append(f"{route} @ {width}px: Tab did not focus an interactive element.")
+                            failures.append(
+                                f"{route} @ {width}px: Tab did not focus an interactive element."
+                            )
                         elif not focus["visible"]:
-                            failures.append(f"{route} @ {width}px: first keyboard focus has no visible indicator.")
+                            failures.append(
+                                f"{route} @ {width}px: first keyboard focus has no visible indicator."
+                            )
                         elif focus.get("rect") and (
                             focus["rect"]["left"] < -1 or focus["rect"]["right"] > width + 1
                         ):
-                            failures.append(f"{route} @ {width}px: first keyboard focus is horizontally obscured.")
+                            failures.append(
+                                f"{route} @ {width}px: first keyboard focus is horizontally obscured."
+                            )
                         page.close()
-                browser.close()
             finally:
-                pass
+                browser.close()
     finally:
         server.shutdown()
         server.server_close()
 
     failures.extend("JavaScript page error: " + error for error in page_errors)
-    print(f"Responsive browser checks: {checks} page/viewport combinations across {len(pages)} pages.")
+    print(
+        f"Responsive browser checks: {checks} page/viewport combinations "
+        f"across {len(pages)} pages."
+    )
     print("Viewport widths (CSS px): " + ", ".join(map(str, VIEWPORTS)))
     if failures:
         for failure in failures:
             print("FAIL: " + failure)
         print(f"Result: FAILED ({len(failures)} issue(s)).")
         return 1
-    print("Result: PASSED (no horizontal page overflow, first-tab focus, or page errors detected).")
+    print(
+        "Result: PASSED (no horizontal page overflow, first-tab focus, "
+        "or page errors detected)."
+    )
     return 0
 
 
