@@ -6,8 +6,11 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 errors = []
+checks = 0
 
 def require(condition, message):
+    global checks
+    checks += 1
     if not condition:
         errors.append(message)
 
@@ -61,4 +64,4 @@ if errors:
     print(f"Result: FAILED ({len(errors)} issue(s))")
     raise SystemExit(1)
 
-print("Creative studio regression checks: 30 assertions passed.")
+print(f"Creative studio regression checks: {checks} assertions passed.")
