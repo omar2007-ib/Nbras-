@@ -60,4 +60,4 @@ if errors:
     print(f"Result: FAILED ({len(errors)} issue(s))")
     raise SystemExit(1)
 
-print("Creative studio regression checks: 26 assertions passed.")
+print("Creative studio regression checks: 34 assertions passed.")
