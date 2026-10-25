@@ -1,0 +1,562 @@
+(() => {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+  const fileInput = $("video-file");
+  const sourceVideo = $("source-preview");
+  const outputVideo = $("output-preview");
+  const status = $("studio-status");
+  const meta = $("video-meta");
+  const startInput = $("clip-start");
+  const durationInput = $("clip-duration");
+  const detectButton = $("detect-scenes");
+  const sceneProgress = $("scene-progress");
+  const sceneResults = $("scene-results");
+  const captionStart = $("caption-start");
+  const captionEnd = $("caption-end");
+  const captionText = $("caption-text");
+  const captionLanguage = $("caption-language");
+  const addCaptionButton = $("add-caption");
+  const captionList = $("caption-list");
+  const exportButton = $("export-short");
+  const progress = $("export-progress");
+  const downloadVideo = $("download-video");
+  const downloadSrt = $("download-srt");
+  const exportMeta = $("export-meta");
+
+  const MAX_FILE_BYTES = 250 * 1024 * 1024;
+  const MAX_CLIP_SECONDS = 180;
+  const SAMPLE_WIDTH = 64;
+  const SAMPLE_HEIGHT = 36;
+  let selectedFile = null;
+  let sourceUrl = null;
+  let outputUrl = null;
+  let captions = [];
+  let sceneTimes = [];
+  let exporting = false;
+  let scanFrameId = 0;
+
+  function setStatus(message, state) {
+    status.textContent = message;
+    status.dataset.state = state || "info";
+  }
+
+  function formatTime(seconds) {
+    const value = Math.max(0, Number(seconds) || 0);
+    const minutes = Math.floor(value / 60);
+    const remaining = value - minutes * 60;
+    return String(minutes).padStart(2, "0") + ":" + remaining.toFixed(1).padStart(4, "0");
+  }
+
+  function clipBounds() {
+    const total = Number(sourceVideo.duration);
+    const start = Number(startInput.value);
+    const duration = Number(durationInput.value);
+    if (!Number.isFinite(total) || total <= 0) throw new Error("تعذّر قراءة مدة الفيديو.");
+    if (!Number.isFinite(start) || start < 0 || start >= total) throw new Error("بداية المقطع يجب أن تكون داخل مدة الفيديو.");
+    if (!Number.isFinite(duration) || duration < 1 || duration > MAX_CLIP_SECONDS) throw new Error("مدة المقطع يجب أن تكون بين ثانية و180 ثانية.");
+    if (start + duration > total + 0.05) throw new Error("نهاية المقطع تتجاوز مدة الفيديو.");
+    return { start, end: Math.min(total, start + duration), duration: Math.min(duration, total - start) };
+  }
+
+  function setBusy(busy) {
+    exporting = busy;
+    fileInput.disabled = busy;
+    detectButton.disabled = busy || !selectedFile;
+    addCaptionButton.disabled = busy || !selectedFile;
+    exportButton.disabled = busy || !selectedFile;
+    startInput.disabled = busy;
+    durationInput.disabled = busy;
+    captionStart.disabled = busy;
+    captionEnd.disabled = busy;
+    captionText.disabled = busy;
+    captionLanguage.disabled = busy;
+  }
+
+  function revokeUrl(url) {
+    if (url) URL.revokeObjectURL(url);
+  }
+
+  function cleanFileName(name) {
+    return String(name || "athar-short").replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9\u0600-\u06FF_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "athar-short";
+  }
+
+  function waitForMediaEvent(media, eventName) {
+    return new Promise((resolve, reject) => {
+      const onEvent = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error("تعذّر قراءة الفيديو في المتصفح."));
+      };
+      const cleanup = () => {
+        media.removeEventListener(eventName, onEvent);
+        media.removeEventListener("error", onError);
+      };
+      media.addEventListener(eventName, onEvent, { once: true });
+      media.addEventListener("error", onError, { once: true });
+    });
+  }
+
+  function updateClipLimits() {
+    if (!selectedFile || !Number.isFinite(sourceVideo.duration)) return;
+    const total = sourceVideo.duration;
+    const start = Math.max(0, Math.min(Number(startInput.value) || 0, Math.max(0, total - 1)));
+    const duration = Math.max(1, Math.min(Number(durationInput.value) || 30, MAX_CLIP_SECONDS, total - start));
+    startInput.max = String(Math.max(0, total - 1));
+    durationInput.max = String(Math.min(MAX_CLIP_SECONDS, total - start));
+    startInput.value = start.toFixed(1);
+    durationInput.value = duration.toFixed(1);
+    captionEnd.max = String(duration);
+    if (Number(captionEnd.value) > duration) captionEnd.value = duration.toFixed(1);
+    renderCaptions();
+  }
+
+  function resetOutput() {
+    revokeUrl(outputUrl);
+    outputUrl = null;
+    outputVideo.removeAttribute("src");
+    outputVideo.hidden = true;
+    downloadVideo.hidden = true;
+    downloadVideo.removeAttribute("href");
+    downloadSrt.hidden = captions.length === 0;
+    exportMeta.textContent = "";
+    progress.hidden = true;
+    progress.value = 0;
+  }
+
+  fileInput.addEventListener("change", async () => {
+    if (exporting) return;
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    const extension = file.name.toLowerCase().split(".").pop();
+    const supportedExtensions = ["mp4", "webm", "mov", "m4v"];
+    if (!(file.type.startsWith("video/") || supportedExtensions.includes(extension))) {
+      fileInput.value = "";
+      setStatus("اختر ملف فيديو بصيغة MP4 أو WebM أو MOV أو M4V.", "error");
+      return;
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      fileInput.value = "";
+      setStatus("حجم الملف أكبر من 250 ميجابايت. اختر ملفًا أصغر لتجنب نفاد ذاكرة المتصفح.", "error");
+      return;
+    }
+    selectedFile = file;
+    revokeUrl(sourceUrl);
+    sourceUrl = URL.createObjectURL(file);
+    sourceVideo.src = sourceUrl;
+    sourceVideo.hidden = false;
+    outputUrl = null;
+    resetOutput();
+    captions = [];
+    sceneTimes = [];
+    sceneResults.replaceChildren();
+    renderCaptions();
+    meta.textContent = file.name + " — " + (file.size / (1024 * 1024)).toFixed(1) + " MB — جارٍ قراءة المدة…";
+    setStatus("يُقرأ الملف محليًا داخل المتصفح.", "info");
+    try {
+      await waitForMediaEvent(sourceVideo, "loadedmetadata");
+      if (!Number.isFinite(sourceVideo.duration) || sourceVideo.duration <= 0) throw new Error("لم يتمكن المتصفح من قراءة مدة هذا الملف.");
+      startInput.value = "0";
+      durationInput.value = Math.min(30, sourceVideo.duration).toFixed(1);
+      updateClipLimits();
+      meta.textContent = file.name + " — " + (file.size / (1024 * 1024)).toFixed(1) + " MB — المدة " + formatTime(sourceVideo.duration);
+      detectButton.disabled = false;
+      addCaptionButton.disabled = false;
+      exportButton.disabled = false;
+      setStatus("الفيديو جاهز. اختر نقطة البداية وأضف الترجمة قبل التصدير.", "success");
+    } catch (error) {
+      selectedFile = null;
+      detectButton.disabled = true;
+      addCaptionButton.disabled = true;
+      exportButton.disabled = true;
+      setStatus(error.message || "تعذّر فتح الفيديو.", "error");
+    }
+  });
+
+  startInput.addEventListener("change", updateClipLimits);
+  durationInput.addEventListener("change", updateClipLimits);
+
+  function meanFrameDifference(previous, current) {
+    let total = 0;
+    let samples = 0;
+    for (let index = 0; index < current.length; index += 4) {
+      total += Math.abs(current[index] - previous[index]);
+      total += Math.abs(current[index + 1] - previous[index + 1]);
+      total += Math.abs(current[index + 2] - previous[index + 2]);
+      samples += 3;
+    }
+    return samples ? total / samples : 0;
+  }
+
+  async function detectSceneChanges() {
+    if (!selectedFile || exporting) return;
+    detectButton.disabled = true;
+    sceneResults.replaceChildren();
+    sceneTimes = [];
+    sceneProgress.textContent = "يجري تحليل تغيّر الإطارات محليًا؛ لا تغلق الصفحة أثناء الفحص.";
+    setStatus("يجري البحث عن تغيّرات بصرية في الفيديو.", "info");
+    const scanner = document.createElement("video");
+    scanner.muted = true;
+    scanner.playsInline = true;
+    scanner.preload = "auto";
+    scanner.playbackRate = 4;
+    const metadataReady = waitForMediaEvent(scanner, "loadedmetadata");
+    scanner.src = sourceUrl;
+    let previous = null;
+    let lastSampleTime = -1;
+    let lastSceneTime = -10;
+    const sampleCanvas = document.createElement("canvas");
+    sampleCanvas.width = SAMPLE_WIDTH;
+    sampleCanvas.height = SAMPLE_HEIGHT;
+    const context = sampleCanvas.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      detectButton.disabled = false;
+      sceneProgress.textContent = "";
+      setStatus("هذا المتصفح لا يدعم تحليل الإطارات في Canvas.", "error");
+      return;
+    }
+
+    try {
+      await metadataReady;
+      scanner.currentTime = 0;
+      if (scanner.readyState < 2) await waitForMediaEvent(scanner, "loadeddata");
+      await scanner.play();
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (error) => {
+          if (settled) return;
+          settled = true;
+          cancelAnimationFrame(scanFrameId);
+          scanner.removeEventListener("ended", onEnded);
+          if (error) reject(error); else resolve();
+        };
+        const onEnded = () => finish();
+        scanner.addEventListener("ended", onEnded, { once: true });
+        const tick = () => {
+          if (scanner.ended || scanner.currentTime >= scanner.duration - 0.05) {
+            finish();
+            return;
+          }
+          if (scanner.readyState >= 2 && scanner.currentTime - lastSampleTime >= 0.45) {
+            try {
+              context.drawImage(scanner, 0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT);
+              const current = context.getImageData(0, 0, SAMPLE_WIDTH, SAMPLE_HEIGHT).data;
+              if (previous) {
+                const score = meanFrameDifference(previous, current);
+                const time = scanner.currentTime;
+                if (score >= 27 && time >= 1.5 && time - lastSceneTime >= 4.5) {
+                  sceneTimes.push(Number(time.toFixed(1)));
+                  lastSceneTime = time;
+                }
+              }
+              previous = new Uint8ClampedArray(current);
+              lastSampleTime = scanner.currentTime;
+              sceneProgress.textContent = "تم فحص " + formatTime(scanner.currentTime) + " من " + formatTime(scanner.duration) + " — نقاط التغيّر: " + sceneTimes.length;
+            } catch (error) {
+              finish(error);
+              return;
+            }
+          }
+          scanFrameId = requestAnimationFrame(tick);
+        };
+        scanFrameId = requestAnimationFrame(tick);
+      });
+      scanner.pause();
+      renderSceneSuggestions();
+      if (sceneTimes.length) {
+        setStatus("اكتمل الفحص. الاقتراحات مبنية على تغيّر الصورة فقط، وليست تقييمًا لمحتوى الكلام.", "success");
+        sceneProgress.textContent = "عُثر على " + sceneTimes.length + " نقطة تغيّر بصري.";
+      } else {
+        setStatus("اكتمل الفحص ولم تُكتشف نقاط واضحة. يمكنك ضبط البداية والمدة يدويًا.", "info");
+        sceneProgress.textContent = "لم يُكتشف تغيّر يتجاوز العتبة المحددة.";
+      }
+    } catch (error) {
+      scanner.pause();
+      setStatus(error.message || "تعذّر تحليل المشاهد على هذا الجهاز.", "error");
+      sceneProgress.textContent = "جرّب ملفًا أقصر أو اضبط القص يدويًا.";
+    } finally {
+      scanner.removeAttribute("src");
+      scanner.load();
+      detectButton.disabled = !selectedFile;
+    }
+  }
+
+  function renderSceneSuggestions() {
+    sceneResults.replaceChildren();
+    sceneTimes.slice(0, 40).forEach((time, index) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "scene-chip";
+      button.textContent = "اقتراح " + (index + 1) + " · " + formatTime(time);
+      button.addEventListener("click", () => {
+        const total = sourceVideo.duration;
+        const wantedDuration = Math.min(30, MAX_CLIP_SECONDS, total);
+        let start = Math.max(0, time - Math.min(10, wantedDuration / 3));
+        if (start + wantedDuration > total) start = Math.max(0, total - wantedDuration);
+        startInput.value = start.toFixed(1);
+        durationInput.value = wantedDuration.toFixed(1);
+        updateClipLimits();
+        setStatus("تم اختيار نقطة تغيّر بصري. راجع المعاينة وحدّد إن كان المقطع مناسبًا.", "info");
+      });
+      sceneResults.append(button);
+    });
+  }
+
+  detectButton.addEventListener("click", detectSceneChanges);
+
+  function renderCaptions() {
+    captionList.replaceChildren();
+    captions.forEach((caption, index) => {
+      const item = document.createElement("li");
+      const text = document.createElement("span");
+      text.textContent = formatTime(caption.start) + "–" + formatTime(caption.end) + " · " + caption.text;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "caption-remove";
+      remove.textContent = "حذف";
+      remove.setAttribute("aria-label", "حذف الترجمة " + (index + 1));
+      remove.addEventListener("click", () => {
+        captions.splice(index, 1);
+        renderCaptions();
+        resetOutput();
+      });
+      item.append(text, remove);
+      captionList.append(item);
+    });
+    downloadSrt.hidden = captions.length === 0;
+  }
+
+  addCaptionButton.addEventListener("click", () => {
+    if (!selectedFile) return;
+    const start = Number(captionStart.value);
+    const end = Number(captionEnd.value);
+    const text = captionText.value.trim();
+    let bounds;
+    try { bounds = clipBounds(); } catch (error) { setStatus(error.message, "error"); return; }
+    if (!text) { setStatus("اكتب نص الترجمة أولًا.", "error"); return; }
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start || end > bounds.duration) {
+      setStatus("توقيت الترجمة يجب أن يبدأ بعد الصفر وينتهي بعد بدايته وداخل مدة المقطع.", "error");
+      return;
+    }
+    captions.push({ start, end, text, language: captionLanguage.value });
+    captions.sort((a, b) => a.start - b.start);
+    captionText.value = "";
+    renderCaptions();
+    resetOutput();
+    setStatus("أُضيفت الترجمة. ستُدمج في الفيديو عند التصدير ويمكن تنزيل SRT منفصل.", "success");
+  });
+
+  function srtTimestamp(seconds) {
+    const milliseconds = Math.max(0, Math.round(seconds * 1000));
+    const hours = Math.floor(milliseconds / 3600000);
+    const minutes = Math.floor((milliseconds % 3600000) / 60000);
+    const secs = Math.floor((milliseconds % 60000) / 1000);
+    const millis = milliseconds % 1000;
+    return String(hours).padStart(2, "0") + ":" + String(minutes).padStart(2, "0") + ":" + String(secs).padStart(2, "0") + "," + String(millis).padStart(3, "0");
+  }
+
+  function buildSrt() {
+    return captions.map((caption, index) => (index + 1) + "\n" + srtTimestamp(caption.start) + " --> " + srtTimestamp(caption.end) + "\n" + caption.text.replace(/\r?\n/g, "\n") + "\n").join("\n");
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.hidden = true;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+
+  downloadSrt.addEventListener("click", () => {
+    if (!captions.length) return;
+    const language = captionLanguage.value === "en" ? "en" : "ar";
+    const baseName = cleanFileName(selectedFile ? selectedFile.name : "athar-short");
+    downloadBlob(new Blob(["\uFEFF", buildSrt()], { type: "text/plain;charset=utf-8" }), baseName + "." + language + ".srt");
+  });
+
+  function wrapCanvasText(text, context, maxWidth) {
+    const words = String(text).split(/\s+/).filter(Boolean);
+    const lines = [];
+    let current = "";
+    words.forEach((word) => {
+      const candidate = current ? current + " " + word : word;
+      if (current && context.measureText(candidate).width > maxWidth) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = candidate;
+      }
+    });
+    if (current) lines.push(current);
+    return lines.slice(0, 3);
+  }
+
+  function drawCover(context, video, canvas) {
+    const sourceWidth = video.videoWidth;
+    const sourceHeight = video.videoHeight;
+    if (!sourceWidth || !sourceHeight) return;
+    const targetRatio = canvas.width / canvas.height;
+    const sourceRatio = sourceWidth / sourceHeight;
+    let sx = 0, sy = 0, sw = sourceWidth, sh = sourceHeight;
+    if (sourceRatio > targetRatio) {
+      sw = sourceHeight * targetRatio;
+      sx = (sourceWidth - sw) / 2;
+    } else {
+      sh = sourceWidth / targetRatio;
+      sy = (sourceHeight - sh) / 2;
+    }
+    context.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  }
+
+  function drawActiveCaption(context, canvas, relativeTime) {
+    const active = captions.find((caption) => relativeTime >= caption.start && relativeTime <= caption.end);
+    if (!active) return;
+    context.save();
+    context.font = '700 42px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.direction = active.language === "en" ? "ltr" : "rtl";
+    const lines = wrapCanvasText(active.text, context, canvas.width - 100);
+    const lineHeight = 52;
+    const boxHeight = lines.length * lineHeight + 34;
+    const boxY = canvas.height - 110 - boxHeight;
+    context.fillStyle = "rgba(27, 16, 45, 0.82)";
+    context.fillRect(28, boxY, canvas.width - 56, boxHeight);
+    context.fillStyle = "#FFFFFF";
+    lines.forEach((line, index) => context.fillText(line, canvas.width / 2, boxY + 17 + lineHeight * index + lineHeight / 2, canvas.width - 90));
+    context.restore();
+  }
+
+  function supportedRecorderType() {
+    if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") return "";
+    const candidates = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+      "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+      "video/mp4"
+    ];
+    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+  }
+
+  async function exportShort() {
+    if (!selectedFile || exporting) return;
+    let bounds;
+    try { bounds = clipBounds(); } catch (error) { setStatus(error.message, "error"); return; }
+    if (typeof MediaRecorder === "undefined" || typeof sourceVideo.captureStream !== "function" && typeof sourceVideo.mozCaptureStream !== "function") {
+      setStatus("متصفحك لا يدعم التقاط الفيديو والصوت المطلوب للتصدير. استخدم متصفحًا حديثًا يدعم MediaRecorder وcaptureStream.", "error");
+      return;
+    }
+    const mimeType = supportedRecorderType();
+    if (!mimeType) {
+      setStatus("لا توجد صيغة تسجيل مدعومة في هذا المتصفح؛ لم يتم إنشاء ملف.", "error");
+      return;
+    }
+    resetOutput();
+    setBusy(true);
+    progress.hidden = false;
+    progress.value = 0;
+    setStatus("يُجهّز التصدير المحلي. لا تغلق الصفحة حتى يكتمل التسجيل.", "info");
+    const canvas = document.createElement("canvas");
+    canvas.width = 720;
+    canvas.height = 1280;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setBusy(false);
+      setStatus("تعذّر إنشاء مساحة رسم الفيديو في هذا المتصفح.", "error");
+      return;
+    }
+    let sourceStream;
+    let outputStream;
+    let recorder;
+    let animationId = 0;
+    let stopTimer = 0;
+    const chunks = [];
+    try {
+      sourceVideo.pause();
+      sourceVideo.currentTime = bounds.start;
+      if (Math.abs(sourceVideo.currentTime - bounds.start) > 0.05) await waitForMediaEvent(sourceVideo, "seeked");
+      sourceStream = typeof sourceVideo.captureStream === "function" ? sourceVideo.captureStream() : sourceVideo.mozCaptureStream();
+      outputStream = canvas.captureStream(30);
+      sourceStream.getAudioTracks().forEach((track) => outputStream.addTrack(track.clone()));
+      recorder = new MediaRecorder(outputStream, { mimeType, videoBitsPerSecond: 5000000, audioBitsPerSecond: 128000 });
+      const stopped = new Promise((resolve, reject) => {
+        recorder.addEventListener("stop", resolve, { once: true });
+        recorder.addEventListener("error", () => reject(new Error("توقف تسجيل الفيديو بسبب خطأ في المتصفح.")), { once: true });
+      });
+      const drawFrame = () => {
+        drawCover(context, sourceVideo, canvas);
+        drawActiveCaption(context, canvas, sourceVideo.currentTime - bounds.start);
+        const elapsed = Math.max(0, sourceVideo.currentTime - bounds.start);
+        progress.value = Math.min(100, Math.round(elapsed / bounds.duration * 100));
+        if (sourceVideo.currentTime >= bounds.end - 0.03) {
+          sourceVideo.pause();
+          if (recorder.state !== "inactive") recorder.stop();
+          return;
+        }
+        animationId = requestAnimationFrame(drawFrame);
+      };
+      recorder.addEventListener("dataavailable", (event) => {
+        if (event.data && event.data.size) chunks.push(event.data);
+      });
+      recorder.start(250);
+      await sourceVideo.play();
+      drawFrame();
+      stopTimer = window.setTimeout(() => {
+        if (recorder && recorder.state !== "inactive") {
+          sourceVideo.pause();
+          recorder.stop();
+        }
+      }, (bounds.duration + 30) * 1000);
+      await stopped;
+      window.clearTimeout(stopTimer);
+      cancelAnimationFrame(animationId);
+      if (!chunks.length) throw new Error("لم يُنتج المتصفح بيانات فيديو. جرّب متصفحًا آخر أو ملفًا أقصر.");
+      const blob = new Blob(chunks, { type: mimeType });
+      if (!blob.size) throw new Error("ملف التصدير فارغ؛ لم يتم تقديم رابط تنزيل.");
+      outputUrl = URL.createObjectURL(blob);
+      outputVideo.src = outputUrl;
+      outputVideo.hidden = false;
+      downloadVideo.href = outputUrl;
+      const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+      downloadVideo.download = cleanFileName(selectedFile.name) + "-short." + extension;
+      downloadVideo.textContent = "تنزيل الفيديو (" + extension.toUpperCase() + ")";
+      downloadVideo.hidden = false;
+      progress.value = 100;
+      exportMeta.textContent = "تم إنشاء " + extension.toUpperCase() + " — " + (blob.size / (1024 * 1024)).toFixed(1) + " MB — " + formatTime(bounds.duration) + ".";
+      setStatus("اكتمل التصدير محليًا. راجع الملف قبل نشره على أي منصة.", "success");
+    } catch (error) {
+      if (recorder && recorder.state !== "inactive") {
+        try { recorder.stop(); } catch {}
+      }
+      setStatus(error.message || "تعذّر تصدير الفيديو. لم يتم إنشاء رابط تنزيل صالح.", "error");
+    } finally {
+      window.clearTimeout(stopTimer);
+      cancelAnimationFrame(animationId);
+      if (sourceStream) sourceStream.getTracks().forEach((track) => track.stop());
+      if (outputStream) outputStream.getTracks().forEach((track) => track.stop());
+      sourceVideo.pause();
+      setBusy(false);
+      if (selectedFile) {
+        detectButton.disabled = false;
+        addCaptionButton.disabled = false;
+        exportButton.disabled = false;
+      }
+    }
+  }
+
+  exportButton.addEventListener("click", exportShort);
+
+  window.addEventListener("beforeunload", () => {
+    cancelAnimationFrame(scanFrameId);
+    revokeUrl(sourceUrl);
+    revokeUrl(outputUrl);
+  });
+})();
