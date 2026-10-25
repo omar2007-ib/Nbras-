@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#5B21B6">
+  <meta name="description" content="استوديو أثَر المحلي لقص الفيديو عموديًا وإضافة ترجمة نصية وتصدير المقاطع دون رفع ملفاتك إلى خادم.">
+  <link rel="icon" type="image/svg+xml" href="assets/athar-mark.svg">
+  <title>استوديو المقاطع القصيرة | أثَر</title>
+  <link rel="stylesheet" href="assets/athar-identity.css">
+  <link rel="stylesheet" href="assets/athar-design-system.css">
+  <link rel="stylesheet" href="assets/athar-premium.css">
+  <link rel="stylesheet" href="assets/athar-video-studio.css">
+</head>
+<body>
+<header class="athar-studio-header">
+  <a class="logo" href="index.html" aria-label="أثَر — الصفحة الرئيسية"><span>أثَر</span></a>
+  <nav aria-label="القائمة الرئيسية">
+    <a href="index.html">الرئيسية</a>
+    <a href="courses.html">الدورات</a>
+    <a href="practice.html">التدريب</a>
+    <a href="video-studio.html" aria-current="page">استوديو المقاطع</a>
+    <a href="design-studio.html">استوديو التصميم</a>
+  </nav>
+</header>
+<main class="athar-studio-shell">
+  <section class="studio-intro">
+    <span class="studio-eyebrow">أدوات إنتاج محلية</span>
+    <h1>حوّل الفيديو الطويل إلى مقطع عمودي</h1>
+    <p>اختر مقطعًا من جهازك، اكتشف نقاط تغيّر المشاهد، اضبط القص، أضف ترجمتك النصية، ثم صدّر فيديو عموديًا مع الترجمة مدمجة.</p>
+    <div id="studio-status" class="studio-status" role="status" aria-live="polite">اختر فيديو للبدء. لا يُرفع الملف إلى خادم.</div>
+    <p class="studio-note">هذه النسخة تستخدم كشف تغيّر الصورة وليس فهمًا دلاليًا أو ذكاءً اصطناعيًا. الترجمة النصية تُدخل يدويًا؛ لم يتم توصيل تحويل الكلام إلى نص أو الترجمة الآلية بعد.</p>
+  </section>
+
+  <div class="studio-grid">
+    <section class="studio-card" aria-labelledby="source-heading">
+      <div class="studio-step">01</div>
+      <h2 id="source-heading">اختيار الفيديو</h2>
+      <label for="video-file">ملف فيديو من جهازك</label>
+      <input id="video-file" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,.mp4,.webm,.mov,.m4v">
+      <p class="studio-help">الحد الأقصى 250 ميجابايت. للحصول على أداء أفضل، ابدأ بملف أقل من 100 ميجابايت.</p>
+      <p id="video-meta" class="studio-meta">لم يتم اختيار فيديو.</p>
+      <video id="source-preview" controls playsinline preload="metadata" hidden aria-label="معاينة الفيديو الأصلي"></video>
+    </section>
+
+    <section class="studio-card" aria-labelledby="cut-heading">
+      <div class="studio-step">02</div>
+      <h2 id="cut-heading">القص العمودي</h2>
+      <div class="studio-fields">
+        <div>
+          <label for="clip-start">بداية المقطع (ثانية)</label>
+          <input id="clip-start" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+        </div>
+        <div>
+          <label for="clip-duration">المدة (ثانية)</label>
+          <input id="clip-duration" type="number" min="1" max="180" step="0.1" value="30" inputmode="decimal">
+        </div>
+      </div>
+      <p class="studio-help">التصدير بحد أقصى 180 ثانية لكل مقطع. سيُقص الإطار إلى نسبة 9:16 مع توسيط الصورة.</p>
+      <button id="detect-scenes" class="studio-button studio-button--secondary" type="button" disabled>كشف تغيّر المشاهد واقتراح نقاط قص</button>
+      <p id="scene-progress" class="studio-help" role="status" aria-live="polite"></p>
+      <div id="scene-results" class="scene-results" aria-label="اقتراحات القص"></div>
+    </section>
+
+    <section class="studio-card" aria-labelledby="captions-heading">
+      <div class="studio-step">03</div>
+      <h2 id="captions-heading">الترجمة النصية</h2>
+      <p class="studio-help">أدخل النص المترجم يدويًا وحدد توقيته بالنسبة إلى بداية المقطع المختار. سيظهر النص على الفيديو ويمكن تنزيل ملف SRT منفصل.</p>
+      <div class="studio-fields">
+        <div>
+          <label for="caption-start">من (ثانية)</label>
+          <input id="caption-start" type="number" min="0" step="0.1" value="0" inputmode="decimal">
+        </div>
+        <div>
+          <label for="caption-end">إلى (ثانية)</label>
+          <input id="caption-end" type="number" min="0.1" step="0.1" value="3" inputmode="decimal">
+        </div>
+      </div>
+      <label for="caption-language">لغة النص</label>
+      <select id="caption-language">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+      </select>
+      <label for="caption-text">نص الترجمة</label>
+      <textarea id="caption-text" rows="3" maxlength="500" placeholder="اكتب سطر الترجمة هنا"></textarea>
+      <button id="add-caption" class="studio-button" type="button" disabled>إضافة الترجمة</button>
+      <ul id="caption-list" class="caption-list" aria-label="الترجمات المضافة"></ul>
+      <button id="download-srt" class="studio-button studio-button--secondary" type="button" hidden>تنزيل ملف SRT</button>
+    </section>
+
+    <section class="studio-card" aria-labelledby="export-heading">
+      <div class="studio-step">04</div>
+      <h2 id="export-heading">المعاينة والتصدير</h2>
+      <p class="studio-help">يُسجّل المتصفح المقطع أثناء تشغيله؛ قد يستغرق التصدير مدة قريبة من مدة المقطع. صيغة الملف تعتمد على ما يدعمه متصفحك.</p>
+      <button id="export-short" class="studio-button" type="button" disabled>إنشاء المقطع العمودي</button>
+      <progress id="export-progress" max="100" value="0" hidden aria-label="تقدم تصدير الفيديو"></progress>
+      <video id="output-preview" controls playsinline preload="metadata" hidden aria-label="معاينة المقطع المُصدّر"></video>
+      <a id="download-video" class="studio-download" href="#" hidden>تنزيل الفيديو المُصدّر</a>
+      <p id="export-meta" class="studio-meta"></p>
+    </section>
+  </div>
+  <section class="studio-privacy">
+    <h2>الخصوصية وحدود النسخة الحالية</h2>
+    <ul>
+      <li>المعالجة والتصدير محليان داخل المتصفح؛ لا يوجد رفع للفيديو ولا تخزين سحابي في هذه الأداة.</li>
+      <li>كشف المشاهد يعتمد على اختلاف الإطارات، وقد يفوّت لحظات الكلام المهمة أو يقترح مشاهد غير مناسبة.</li>
+      <li>إضافة الترجمة وتوقيتها يدوية. لا توجد خدمة متصلة للتفريغ الصوتي أو الترجمة التلقائية.</li>
+      <li>يحتاج التصدير إلى متصفح يدعم MediaRecorder والتقاط الفيديو والصوت. إذا لم يدعمها الجهاز، ستظهر رسالة واضحة بدل إنشاء ملف غير صالح.</li>
+    </ul>
+  </section>
+</main>
+<footer class="athar-studio-footer"><span>أثَر</span> — أدوات تعليمية وإبداعية تحترم خصوصية ملفاتك.</footer>
+<script defer src="assets/athar-video-studio.js"></script>
+</body>
+</html>
