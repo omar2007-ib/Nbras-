@@ -64,42 +64,73 @@ def test_design_studio(browser, base_url, failures, page_errors):
         context.close()
 
 
-def create_test_video(folder):
+def create_test_video(page, folder):
+    import base64
     import shutil
     import subprocess
 
+    fixture = page.evaluate("""async () => {
+      if (typeof MediaRecorder === 'undefined' || typeof HTMLCanvasElement.prototype.captureStream !== 'function') {
+        throw new Error('Browser does not support the media APIs required for this smoke test.');
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 180;
+      const context = canvas.getContext('2d');
+      const stream = canvas.captureStream(15);
+      const mimeType = ['video/webm;codecs=vp8', 'video/webm'].find((type) => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) throw new Error('No WebM MediaRecorder type is supported.');
+      const recorder = new MediaRecorder(stream, { mimeType });
+      const chunks = [];
+      const stopped = new Promise((resolve, reject) => {
+        recorder.addEventListener('dataavailable', (event) => { if (event.data && event.data.size) chunks.push(event.data); });
+        recorder.addEventListener('stop', resolve, { once: true });
+        recorder.addEventListener('error', () => reject(new Error('Synthetic video recording failed.')), { once: true });
+      });
+      recorder.start(100);
+      const start = performance.now();
+      await new Promise((resolve) => {
+        const draw = () => {
+          const elapsed = performance.now() - start;
+          context.fillStyle = Math.floor(elapsed / 250) % 2 ? '#5B21B6' : '#C4B5FD';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.fillStyle = '#FFFFFF';
+          context.fillRect(40, 40, 240, 100);
+          if (elapsed < 1800) requestAnimationFrame(draw); else resolve();
+        };
+        draw();
+      });
+      recorder.stop();
+      await stopped;
+      stream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(chunks, { type: mimeType });
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let binary = '';
+      for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+      }
+      return { mimeType, base64: btoa(binary) };
+    }""")
+    raw_path = Path(folder) / "athar-smoke-raw.webm"
+    raw_path.write_bytes(base64.b64decode(fixture["base64"]))
+    if raw_path.stat().st_size < 1000:
+        raise RuntimeError("Synthetic browser-test video was empty.")
+
     candidates = sorted(Path.home().glob(".cache/ms-playwright/ffmpeg-*/ffmpeg-linux"))
     ffmpeg = str(candidates[-1]) if candidates else shutil.which("ffmpeg")
-    if not ffmpeg:
-        raise RuntimeError("No FFmpeg binary was found for creating the local test fixture.")
-
-    mp4_path = Path(folder) / "athar-smoke-test.mp4"
-    webm_path = Path(folder) / "athar-smoke-test.webm"
-    commands = [
-        [
-            ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
-            "-f", "lavfi", "-i", "color=c=purple:s=320x180:r=15:d=2",
-            "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=44100:duration=2",
-            "-shortest", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "64k", "-movflags", "+faststart", str(mp4_path),
-        ],
-        [
-            ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
-            "-f", "lavfi", "-i", "color=c=purple:s=320x180:r=15:d=2",
-            "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=44100:duration=2",
-            "-shortest", "-c:v", "libvpx", "-deadline", "realtime", "-cpu-used", "8", "-b:v", "200k",
-            "-c:a", "libopus", "-b:a", "64k", "-f", "webm", str(webm_path),
-        ],
-    ]
-    errors = []
-    for command in commands:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=30)
-        output = Path(command[-1])
-        if result.returncode == 0 and output.exists() and output.stat().st_size > 1000:
-            return output
-        errors.append(result.stderr.strip()[-1000:])
-    raise RuntimeError("Could not generate a valid synthetic browser-test video: " + " | ".join(errors))
-
+    if ffmpeg:
+        remux_path = Path(folder) / "athar-smoke-test.webm"
+        commands = [
+            [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-fflags", "+genpts",
+             "-i", str(raw_path), "-c", "copy", "-f", "webm", str(remux_path)],
+            [ffmpeg, "-hide_banner", "-loglevel", "error", "-y",
+             "-i", str(raw_path), "-c", "copy", "-f", "webm", str(remux_path)],
+        ]
+        for command in commands:
+            result = subprocess.run(command, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0 and remux_path.exists() and remux_path.stat().st_size > 1000:
+                return remux_path
+    return raw_path
 
 def test_video_studio(browser, base_url, failures, page_errors):
     import tempfile
@@ -113,7 +144,7 @@ def test_video_studio(browser, base_url, failures, page_errors):
             failures.append("video-studio.html: failed to open for interaction testing.")
             return
         with tempfile.TemporaryDirectory(prefix="athar-video-test-") as folder:
-            video_path = create_test_video(folder)
+            video_path = create_test_video(page, folder)
             if video_path.stat().st_size < 1000:
                 failures.append("video studio test fixture was empty.")
                 return
