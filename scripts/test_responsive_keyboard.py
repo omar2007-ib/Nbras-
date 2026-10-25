@@ -166,6 +166,13 @@ def test_video_studio(browser, base_url, failures, page_errors):
             page.locator("#add-caption").click()
             if page.locator("#caption-list li").count() != 1:
                 failures.append("video studio: caption was not added to the list.")
+
+            page.locator("#caption-text").fill("كلمة" * 120)
+            page.locator("#add-caption").click()
+            if page.locator("#caption-list li").count() != 1:
+                failures.append("video studio: an overlong burned-in caption was accepted and may be truncated.")
+            if "قسّمه" not in page.locator("#studio-status").inner_text():
+                failures.append("video studio: overlong caption rejection did not explain how to fix it.")
             with page.expect_download(timeout=10000) as download_info:
                 page.locator("#download-srt").click()
             srt_download = download_info.value
