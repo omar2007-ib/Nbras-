@@ -146,10 +146,10 @@
     selectedFile = file;
     revokeUrl(sourceUrl);
     sourceUrl = URL.createObjectURL(file);
+    const metadataReady = waitForMediaEvent(sourceVideo, "loadedmetadata");
+    resetOutput();
     sourceVideo.src = sourceUrl;
     sourceVideo.hidden = false;
-    outputUrl = null;
-    resetOutput();
     captions = [];
     sceneTimes = [];
     sceneResults.replaceChildren();
@@ -157,7 +157,7 @@
     meta.textContent = file.name + " — " + (file.size / (1024 * 1024)).toFixed(1) + " MB — جارٍ قراءة المدة…";
     setStatus("يُقرأ الملف محليًا داخل المتصفح.", "info");
     try {
-      await waitForMediaEvent(sourceVideo, "loadedmetadata");
+      await metadataReady;
       if (!Number.isFinite(sourceVideo.duration) || sourceVideo.duration <= 0) throw new Error("لم يتمكن المتصفح من قراءة مدة هذا الملف.");
       startInput.value = "0";
       durationInput.value = Math.min(30, sourceVideo.duration).toFixed(1);
@@ -349,6 +349,11 @@
     setStatus("أُضيفت الترجمة. ستُدمج في الفيديو عند التصدير ويمكن تنزيل SRT منفصل.", "success");
   });
 
+  function validateCaptions(duration) {
+    const invalid = captions.find((caption) => caption.start < 0 || caption.end <= caption.start || caption.end > duration + 0.01);
+    if (invalid) throw new Error("هناك ترجمة تتجاوز مدة المقطع الحالي. عدّل توقيتها أو راجع مدة المقطع قبل التصدير.");
+  }
+
   function srtTimestamp(seconds) {
     const milliseconds = Math.max(0, Math.round(seconds * 1000));
     const hours = Math.floor(milliseconds / 3600000);
@@ -376,7 +381,15 @@
 
   downloadSrt.addEventListener("click", () => {
     if (!captions.length) return;
-    const language = captionLanguage.value === "en" ? "en" : "ar";
+    try {
+      const bounds = clipBounds();
+      validateCaptions(bounds.duration);
+    } catch (error) {
+      setStatus(error.message, "error");
+      return;
+    }
+    const languages = Array.from(new Set(captions.map((caption) => caption.language)));
+    const language = languages.length === 1 ? languages[0] : "multi";
     const baseName = cleanFileName(selectedFile ? selectedFile.name : "athar-short");
     downloadBlob(new Blob(["\uFEFF", buildSrt()], { type: "text/plain;charset=utf-8" }), baseName + "." + language + ".srt");
   });
@@ -449,7 +462,13 @@
   async function exportShort() {
     if (!selectedFile || exporting) return;
     let bounds;
-    try { bounds = clipBounds(); } catch (error) { setStatus(error.message, "error"); return; }
+    try {
+      bounds = clipBounds();
+      validateCaptions(bounds.duration);
+    } catch (error) {
+      setStatus(error.message, "error");
+      return;
+    }
     if (typeof MediaRecorder === "undefined" || typeof sourceVideo.captureStream !== "function" && typeof sourceVideo.mozCaptureStream !== "function") {
       setStatus("متصفحك لا يدعم التقاط الفيديو والصوت المطلوب للتصدير. استخدم متصفحًا حديثًا يدعم MediaRecorder وcaptureStream.", "error");
       return;
@@ -481,8 +500,11 @@
     const chunks = [];
     try {
       sourceVideo.pause();
-      sourceVideo.currentTime = bounds.start;
-      if (Math.abs(sourceVideo.currentTime - bounds.start) > 0.05) await waitForMediaEvent(sourceVideo, "seeked");
+      if (Math.abs(sourceVideo.currentTime - bounds.start) > 0.05) {
+        const seeked = waitForMediaEvent(sourceVideo, "seeked");
+        sourceVideo.currentTime = bounds.start;
+        await seeked;
+      }
       sourceStream = typeof sourceVideo.captureStream === "function" ? sourceVideo.captureStream() : sourceVideo.mozCaptureStream();
       outputStream = canvas.captureStream(30);
       sourceStream.getAudioTracks().forEach((track) => outputStream.addTrack(track.clone()));
