@@ -21,5 +21,9 @@ jobs:
           python-version: "3.12"
       - name: Build and validate public pages
         run: python scripts/validate_static_site.py
+      - name: Check creative studio JavaScript syntax
+        run: node --check assets/athar-video-studio.js && node --check assets/athar-design-studio.js
+      - name: Test local creative studio regressions
+        run: python scripts/test_creative_studios.py
       - name: Check MCQ answer-key isolation
         run: python scripts/check_mcq_security.py
