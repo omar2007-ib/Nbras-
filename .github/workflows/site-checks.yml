@@ -19,6 +19,10 @@ jobs:
           python-version: "3.12"
       - name: Validate HTML page metadata and local links
         run: python scripts/check_site.py
+      - name: Check creative studio JavaScript syntax
+        run: node --check assets/athar-video-studio.js && node --check assets/athar-design-studio.js
+      - name: Test local creative studio regressions
+        run: python scripts/test_creative_studios.py
       - name: Run quiz regression checks
         run: python scripts/test_quiz_content.py
       - name: Verify LLM gateway and MCQ builder integration
