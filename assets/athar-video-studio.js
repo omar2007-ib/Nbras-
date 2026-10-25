@@ -26,6 +26,7 @@
 
   const MAX_FILE_BYTES = 250 * 1024 * 1024;
   const MAX_CLIP_SECONDS = 180;
+  const MAX_CAPTION_LINES = 4;
   const SAMPLE_WIDTH = 64;
   const SAMPLE_HEIGHT = 36;
   let selectedFile = null;
@@ -341,6 +342,12 @@
       setStatus("توقيت الترجمة يجب أن يبدأ بعد الصفر وينتهي بعد بدايته وداخل مدة المقطع.", "error");
       return;
     }
+    const measureCanvas = document.createElement("canvas");
+    const measureContext = measureCanvas.getContext("2d");
+    if (!measureContext || !captionLayout(text, measureContext, 620)) {
+      setStatus("نص الترجمة أطول من المساحة المتاحة على الفيديو. قسّمه إلى أكثر من ترجمة قصيرة حتى لا يُحذف أي جزء.", "error");
+      return;
+    }
     captions.push({ start, end, text, language: captionLanguage.value });
     captions.sort((a, b) => a.start - b.start);
     captionText.value = "";
@@ -349,9 +356,16 @@
     setStatus("أُضيفت الترجمة. ستُدمج في الفيديو عند التصدير ويمكن تنزيل SRT منفصل.", "success");
   });
 
-  function validateCaptions(duration) {
+  function validateCaptions(duration, requireVisualFit = false) {
     const invalid = captions.find((caption) => caption.start < 0 || caption.end <= caption.start || caption.end > duration + 0.01);
     if (invalid) throw new Error("هناك ترجمة تتجاوز مدة المقطع الحالي. عدّل توقيتها أو راجع مدة المقطع قبل التصدير.");
+    if (requireVisualFit && captions.length) {
+      const measureCanvas = document.createElement("canvas");
+      const measureContext = measureCanvas.getContext("2d");
+      if (!measureContext || captions.some((caption) => !captionLayout(caption.text, measureContext, 620))) {
+        throw new Error("إحدى الترجمات أطول من المساحة المتاحة على الفيديو. قصّر النص أو قسّمه إلى ترجمات متتابعة قبل التصدير.");
+      }
+    }
   }
 
   function srtTimestamp(seconds) {
@@ -408,7 +422,19 @@
       }
     });
     if (current) lines.push(current);
-    return lines.slice(0, 3);
+    return lines;
+  }
+
+  function captionLayout(text, context, maxWidth) {
+    const fontSizes = [42, 38, 34, 30, 26];
+    for (const fontSize of fontSizes) {
+      context.font = '700 ' + fontSize + 'px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
+      const lines = wrapCanvasText(text, context, maxWidth);
+      if (lines.length <= MAX_CAPTION_LINES && lines.every((line) => context.measureText(line).width <= maxWidth)) {
+        return { lines, fontSize };
+      }
+    }
+    return null;
   }
 
   function drawCover(context, video, canvas) {
@@ -432,14 +458,16 @@
     const active = captions.find((caption) => relativeTime >= caption.start && relativeTime <= caption.end);
     if (!active) return;
     context.save();
-    context.font = '700 42px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.direction = active.language === "en" ? "ltr" : "rtl";
-    const lines = wrapCanvasText(active.text, context, canvas.width - 100);
-    const lineHeight = 52;
-    const boxHeight = lines.length * lineHeight + 34;
-    const boxY = canvas.height - 110 - boxHeight;
+    const layout = captionLayout(active.text, context, canvas.width - 100);
+    if (!layout) return;
+    context.font = '700 ' + layout.fontSize + 'px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
+    const lines = layout.lines;
+    const lineHeight = Math.round(layout.fontSize * 1.25);
+    const boxHeight = lines.length * lineHeight + 30;
+    const boxY = Math.max(40, canvas.height - 110 - boxHeight);
     context.fillStyle = "rgba(27, 16, 45, 0.82)";
     context.fillRect(28, boxY, canvas.width - 56, boxHeight);
     context.fillStyle = "#FFFFFF";
@@ -464,7 +492,7 @@
     let bounds;
     try {
       bounds = clipBounds();
-      validateCaptions(bounds.duration);
+      validateCaptions(bounds.duration, true);
     } catch (error) {
       setStatus(error.message, "error");
       return;
