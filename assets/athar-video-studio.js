@@ -469,7 +469,7 @@
       setStatus(error.message, "error");
       return;
     }
-    if (typeof MediaRecorder === "undefined" || typeof sourceVideo.captureStream !== "function" && typeof sourceVideo.mozCaptureStream !== "function") {
+    if (typeof MediaRecorder === "undefined" || typeof HTMLCanvasElement === "undefined" || typeof HTMLCanvasElement.prototype.captureStream !== "function" || (typeof sourceVideo.captureStream !== "function" && typeof sourceVideo.mozCaptureStream !== "function")) {
       setStatus("متصفحك لا يدعم التقاط الفيديو والصوت المطلوب للتصدير. استخدم متصفحًا حديثًا يدعم MediaRecorder وcaptureStream.", "error");
       return;
     }
@@ -497,6 +497,7 @@
     let recorder;
     let animationId = 0;
     let stopTimer = 0;
+    let timedOut = false;
     const chunks = [];
     try {
       sourceVideo.pause();
@@ -533,6 +534,7 @@
       drawFrame();
       stopTimer = window.setTimeout(() => {
         if (recorder && recorder.state !== "inactive") {
+          timedOut = sourceVideo.currentTime < bounds.end - 0.5;
           sourceVideo.pause();
           recorder.stop();
         }
@@ -540,6 +542,7 @@
       await stopped;
       window.clearTimeout(stopTimer);
       cancelAnimationFrame(animationId);
+      if (timedOut) throw new Error("انتهت مهلة التصدير قبل اكتمال المقطع. أبقِ الصفحة نشطة وجرّب مقطعًا أقصر.");
       if (!chunks.length) throw new Error("لم يُنتج المتصفح بيانات فيديو. جرّب متصفحًا آخر أو ملفًا أقصر.");
       const blob = new Blob(chunks, { type: mimeType });
       if (!blob.size) throw new Error("ملف التصدير فارغ؛ لم يتم تقديم رابط تنزيل.");
