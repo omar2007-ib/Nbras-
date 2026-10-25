@@ -57,14 +57,14 @@
 - كل التعديلات في الفرع `feat/athar-local-creative-studios-20261025` ضمن PR #28؛ لم أدمجها في `main` ولم أغيّر نشر الإنتاج.
 
 ### الاختبارات المؤكدة
-- GitHub Actions: `static-smoke` نجح على commit `cd6b93559aba4bba7a1054704e1284a7348b81eb`، بما في ذلك فحص 15 صفحة، و30 تحققًا لانحدار الاستوديوهات، واختبارات متصفح لـ60 مجموعة صفحة/عرض عبر 375 و768 و1024 و1440 بكسل. نتيجة فحص المتصفح: نجاح بلا تجاوز أفقي أو أخطاء JavaScript أو مشكلة في أول تركيز بلوحة المفاتيح.
+- GitHub Actions: آخر `static-smoke` و`site-checks` نجحا على commit `0125e76c33370855db3ccf142edec68398d42659` بتاريخ 2026-10-25. اجتاز `scripts/test_creative_studios.py` عدد 35 assertion، وفحوصات JavaScript والبناء والروابط المحلية.
 - GitHub Actions: `site-checks` نجح على commit نفسه.
-- شملت اختبارات المتصفح مسار تصدير SVG/PNG وJSON، وملف فيديو اختبار محلي، وإضافة ترجمة وتصدير SRT، ورفض ترجمة طويلة قد تُقتطع. هذه اختبارات Chromium آلية وليست إثباتًا لتوافق Safari/iPad.
-- رابط التشغيل الناجح: https://github.com/omar2007-ib/Nbras-/actions/runs/40214487727
-- رابط الفحص الآخر: https://github.com/omar2007-ib/Nbras-/actions/runs/40214487754
+- شملت اختبارات المتصفح 60 مجموعة صفحة/عرض عبر 15 صفحة عند 375 و768 و1024 و1440 بكسل، دون تجاوز أفقي أو أخطاء JavaScript أو فقدان مؤشر التركيز الأول. كما نجحت في تصدير SVG وPNG وJSON، وإنشاء فيديو عمودي محلي مع ترجمة وSRT، ورفض ترجمة طويلة قد تُقتطع. هذه اختبارات Chromium آلية وليست إثباتًا لتوافق Safari/iPad.
+- رابط `static-smoke`: https://github.com/omar2007-ib/Nbras-/actions/runs/40214840810
+- رابط `site-checks`: https://github.com/omar2007-ib/Nbras-/actions/runs/40214840865
 
 ### النشر والحواجز
-- معاينة Vercel للفرع `feat/athar-local-creative-studios-20261025` وصلت إلى `READY` على commit `cd6b93559aba4bba7a1054704e1284a7348b81eb`، وهدفها Preview وليس Production.
+- معاينة Vercel للفرع `feat/athar-local-creative-studios-20261025` وصلت إلى `READY` على commit `0125e76c33370855db3ccf142edec68398d42659` (رابط المعاينة: https://athar-learning-platform-ijdig6afp-omarirahimppp-5892s-projects.vercel.app). هدفها Preview وليس Production.
 - نشر الإنتاج ما زال على `main`، commit `1c7a7db93110931ac9e58eaf84f7808e3fb056fc`، بحالة `READY`. لم أروّج معاينة الفرع إلى الإنتاج.
 - تعذّر فحص HTML للمعاينة عبر موصل Vercel بسبب `403 forbidden` أثناء محاولة قراءة رابط النشر؛ لذلك لا أؤكد المراجعة البصرية الحية. يلزم إصلاح صلاحية اتصال Vercel أو فحص المعاينة يدويًا.
 - لم يُعثر على ملف خط جزيل ضمن شجرة المستودع. CSS يذكر اسم الخط فقط؛ لا يمكن ضمان ظهوره لدى الزوار قبل إضافة ملف Webfont مرخّص. لم أستبدله بخط آخر ولم أضمّن نسخة غير مرخّصة.
