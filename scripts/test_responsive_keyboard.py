@@ -58,10 +58,43 @@ def test_design_studio(browser, base_url, failures, page_errors):
         tokens = json.loads(Path(token_download.path()).read_text(encoding="utf-8"))
         if tokens.get("palette", {}).get("primary") != "#5B21B6":
             failures.append("design studio: exported identity tokens do not contain the approved primary color.")
+
+        # Long copy must be rejected explicitly rather than silently clipped.
+        page.locator("#design-title").fill(("عنوان طويل " * 12).strip())
+        page.locator("#design-form button[type=submit]").click()
+        overflow_status = page.locator("#design-status").inner_text()
+        if "أطول من المساحة المتاحة" not in overflow_status:
+            failures.append("design studio: overflowing title was not rejected with a clear message.")
+        if not page.locator("#download-svg").is_disabled():
+            failures.append("design studio: SVG download remained enabled after an invalid overflowing title.")
+
     except Exception as exc:
         failures.append(f"design studio browser flow: {exc}")
     finally:
         context.close()
+
+
+def test_homepage_brand(browser, base_url, failures, page_errors):
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    page.on("pageerror", lambda error: page_errors.append(f"index.html brand check: {error}"))
+    try:
+        response = page.goto(base_url + "/index.html", wait_until="load", timeout=20000)
+        if response is None or not response.ok:
+            failures.append("homepage brand check: index.html failed to load.")
+            return
+        color = page.locator("h1").evaluate("(element) => getComputedStyle(element).color")
+        if color != "rgb(91, 33, 182)":
+            failures.append("homepage brand check: approved primary purple is not applied to the main heading.")
+        wordmark = page.locator("header .logo")
+        if wordmark.locator("span").inner_text().strip() != "أثَر":
+            failures.append("homepage brand check: the text-only Athar wordmark is missing.")
+        icon = wordmark.locator("img")
+        if icon.count() and icon.evaluate("(element) => getComputedStyle(element).display") != "none":
+            failures.append("homepage brand check: a separate logo symbol is visible beside the wordmark.")
+    except Exception as exc:
+        failures.append(f"homepage brand browser flow: {exc}")
+    finally:
+        page.close()
 
 
 def create_test_video(page, folder):
@@ -276,6 +309,7 @@ def main():
                                 f"{route} @ {width}px: first keyboard focus is horizontally obscured."
                             )
                         page.close()
+                test_homepage_brand(browser, base_url, failures, page_errors)
                 test_design_studio(browser, base_url, failures, page_errors)
                 test_video_studio(browser, base_url, failures, page_errors)
             finally:
