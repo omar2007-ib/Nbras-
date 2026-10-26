@@ -40,11 +40,14 @@
     })[character]);
   }
 
-  function wrapLines(value, maxChars, maxLines) {
+  function wrapLines(value, maxChars) {
     const words = String(value || "").trim().split(/\s+/).filter(Boolean);
     const lines = [];
     let line = "";
     words.forEach((word) => {
+      if (word.length > maxChars) {
+        throw new Error("توجد كلمة طويلة جدًا بالنسبة إلى المقاس المختار. قصّرها أو أضف فواصل مناسبة قبل إنشاء التصميم.");
+      }
       const candidate = line ? line + " " + word : word;
       if (line && candidate.length > maxChars) {
         lines.push(line);
@@ -54,7 +57,7 @@
       }
     });
     if (line) lines.push(line);
-    return lines.slice(0, maxLines);
+    return lines;
   }
 
   function textBlock(lines, x, y, fontSize, lineHeight, color, anchor, direction, fontWeight) {
@@ -74,8 +77,14 @@
     const direction = languageInput.value === "en" ? "ltr" : "rtl";
     const anchor = direction === "rtl" ? "end" : "start";
     const x = direction === "rtl" ? size.width - 88 : 88;
-    const titleLines = wrapLines(title, size.titleChars, 4);
-    const bodyLines = wrapLines(body, size.bodyChars, 5);
+    const titleLines = wrapLines(title, size.titleChars);
+    const bodyLines = wrapLines(body, size.bodyChars);
+    if (titleLines.length > 4) {
+      throw new Error("العنوان أطول من المساحة المتاحة في هذا القالب. اختصره أو اختر مقاسًا آخر؛ لم يُحذف أي جزء من النص.");
+    }
+    if (bodyLines.length > 5) {
+      throw new Error("النص المساند أطول من المساحة المتاحة في هذا القالب. اختصره أو قسّمه؛ لم يُحذف أي جزء من النص.");
+    }
     const titleSize = size.height >= 1800 ? 82 : 76;
     const titleLineHeight = Math.round(titleSize * 1.28);
     const bodySize = size.height >= 1800 ? 37 : 34;
