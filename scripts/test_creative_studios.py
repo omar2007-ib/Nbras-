@@ -48,7 +48,7 @@ require("MAX_CLIP_SECONDS = 180" in video_js, "Video studio must enforce the doc
 require('id="download-svg"' in design_html and 'id="download-png"' in design_html, "Design studio must expose SVG and PNG export controls.")
 require("image/svg+xml" in design_js and "image/png" in design_js, "Design studio must generate real SVG and PNG files.")
 require("escapeXml" in design_js, "User-entered design text must be escaped before being written into SVG.")
-require(!/return\s+lines\.slice\(0,\s*maxLines\)/.test(design_js), "Design copy must not be silently truncated when it exceeds the template.");
+require("return lines.slice(0, maxLines)" not in design_js, "Design copy must not be silently truncated when it exceeds the template.");
 require("titleLines.length > 4" in design_js and "bodyLines.length > 5" in design_js, "Design studio must reject text overflow with an explicit user-facing error.");
 require('href="assets/athar-premium.css"' in index_html, "Homepage must load the approved Athar premium palette and text-only wordmark layer.");
 require("URL.createObjectURL" in design_js, "Design preview/export must use local Blob URLs.")
