@@ -39,6 +39,7 @@ require("MediaRecorder" in video_js and "captureStream" in video_js, "Video expo
 require("getImageData" in video_js and "meanFrameDifference" in video_js, "Scene suggestions must inspect real video frames.")
 require("buildSrt" in video_js and "srtTimestamp" in video_js, "Subtitle export must generate timed SRT content.")
 require("drawActiveCaption" in video_js and "drawCover" in video_js, "Export must crop to a vertical frame and render captions.")
+require("if (!layout) { context.restore(); return; }" in video_js, "Caption rendering must restore canvas state when a caption cannot be drawn.")
 require("MAX_CAPTION_LINES = 4" in video_js and "captionLayout" in video_js and "return lines.slice(0, 3)" not in video_js, "Burned-in captions must fit the visible area instead of silently truncating after three lines.")
 require(not re.search(r"\bfetch\s*\(", video_js), "Local video processing must not upload or fetch user video data.")
 require("XMLHttpRequest" not in video_js and "FormData" not in video_js, "Video studio must not contain upload transport code.")
