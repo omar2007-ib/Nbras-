@@ -21,6 +21,8 @@ jobs:
         run: python scripts/check_site.py
       - name: Run quiz regression checks
         run: python scripts/test_quiz_content.py
+      - name: Validate Qudrat study-plan schedules and progress UI
+        run: python scripts/test_study_plan.py
       - name: Verify LLM gateway and MCQ builder integration
         run: python scripts/test_llm_integration.py
       - name: Test MCQ provider response validation
