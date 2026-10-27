@@ -149,6 +149,9 @@
       setStatus("تم إنشاء تصميم متجهي فعلي داخل المتصفح. راجع المعاينة قبل التنزيل.", false);
     } catch (error) {
       currentSvg = "";
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = "";
+      preview.replaceChildren();
       svgButton.disabled = true;
       pngButton.disabled = true;
       setStatus(error.message || "تعذّر إنشاء التصميم.", true);
