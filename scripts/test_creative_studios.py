@@ -53,6 +53,7 @@ require("return lines.slice(0, maxLines)" not in design_js, "Design copy must no
 require("titleLines.length > 4" in design_js and "bodyLines.length > 5" in design_js, "Design studio must reject text overflow with an explicit user-facing error.");
 require('href="assets/athar-premium.css"' in index_html, "Homepage must load the approved Athar premium palette and text-only wordmark layer.");
 require("URL.createObjectURL" in design_js, "Design preview/export must use local Blob URLs.")
+require('if (previewUrl) URL.revokeObjectURL(previewUrl);\n      previewUrl = "";\n      preview.replaceChildren();' in design_js, "A rejected design must clear its stale preview and revoke the previous Blob URL.")
 require("#5B21B6" in design_js and "#C4B5FD" in design_js, "Design output must use the approved Athar palette.")
 require("licensedFontAssetBundled: false" in design_js, "The design studio must not falsely claim the licensed Jazeel font is bundled.")
 
