@@ -462,7 +462,7 @@
     context.textBaseline = "middle";
     context.direction = active.language === "en" ? "ltr" : "rtl";
     const layout = captionLayout(active.text, context, canvas.width - 100);
-    if (!layout) return;
+    if (!layout) { context.restore(); return; }
     context.font = '700 ' + layout.fontSize + 'px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
     const lines = layout.lines;
     const lineHeight = Math.round(layout.fontSize * 1.25);
