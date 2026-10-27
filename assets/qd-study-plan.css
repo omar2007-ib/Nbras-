@@ -1,0 +1,36 @@
+/* Qudrat study-plan module — Athar light identity */
+.qd-plan{margin:0 0 30px;padding:clamp(18px,3vw,28px);border:1px solid #EADFE0;border-radius:22px;background:linear-gradient(145deg,#fff,#FFF5F5);box-shadow:0 10px 28px #2D34360A}
+.qd-plan__header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.qd-plan__header h2{margin:10px 0 4px;font-size:clamp(1.5rem,3vw,2rem);color:#2D3436}
+.qd-plan__header p,.qd-plan__sprint>p{margin:0;color:#555F61}
+.qd-plan__reset{min-height:44px;padding:10px 14px;border:1px solid #CDA9AC;border-radius:11px;background:#fff;color:#5D383C;font:inherit;font-weight:700;cursor:pointer}
+.qd-plan__overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+.qd-plan__metric{min-width:0;padding:14px;border:1px solid #EADFE0;border-radius:14px;background:#fff}
+.qd-plan__metric-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px;color:#555F61;font-size:.92rem}
+.qd-plan__metric-head strong{color:#2D3436;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.qd-plan__progress{height:9px;overflow:hidden;border-radius:999px;background:#F0E4E5}
+.qd-plan__progress span{display:block;width:0;height:100%;border-radius:inherit;background:#A8D5BA;transition:width .18s ease}
+.qd-plan__metric:nth-child(2) .qd-plan__progress span{background:#D4AF37}
+.qd-plan__metric:nth-child(3) .qd-plan__progress span{background:#8CBBA1}
+.qd-plan__status{min-height:1.6em;margin:10px 0 16px;color:#40564A;font-size:.92rem}
+.qd-plan__grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.qd-plan__day{min-width:0;padding:16px;border:1px solid #EADFE0;border-radius:15px;background:#fff;transition:border-color .18s ease,background-color .18s ease}
+.qd-plan__day.is-done{border-color:#A8D5BA;background:#F5FBF7}
+.qd-plan__day-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.qd-plan__check{display:flex;align-items:center;gap:10px;min-height:44px;color:#2D3436;font-weight:800;cursor:pointer}
+.qd-plan__check input{width:22px;height:22px;flex:0 0 auto;margin:0;accent-color:#2F7656}
+.qd-plan__track{display:inline-flex;align-items:center;min-height:28px;padding:3px 9px;border-radius:999px;font-size:.8rem;font-weight:800;white-space:nowrap}
+.qd-plan__track--quant{background:#F7E8B6;color:#4D3B08}
+.qd-plan__track--verbal{background:#DCEFE3;color:#204D36}
+.qd-plan__day h3{margin:8px 0 4px;color:#2D3436;font-size:1.08rem;line-height:1.6}
+.qd-plan__day p{margin:0;color:#555F61;font-size:.92rem}
+.qd-plan__day.is-done h3{text-decoration:line-through;text-decoration-color:#A8D5BA}
+.qd-plan__sprint{margin-top:24px;padding:16px;border:1px solid #EADFE0;border-radius:16px;background:#fff}
+.qd-plan__sprint summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#2D3436;font-weight:900}
+.qd-plan__sprint[open] summary{margin-bottom:10px}
+.qd-plan__grid--sprint{margin-top:14px}
+.qd-plan__sprint .qd-plan__metric{margin-top:14px;background:#FFF9E7}
+.qd-plan :where(button,input,summary):focus-visible{outline:3px solid #8A6A08;outline-offset:3px}
+.qd-plan button{touch-action:manipulation}
+@media(max-width:700px){.qd-plan__overview{grid-template-columns:1fr}.qd-plan__grid{grid-template-columns:1fr}.qd-plan__header{align-items:stretch}.qd-plan__reset{align-self:flex-start}}
+@media(prefers-reduced-motion:reduce){.qd-plan *, .qd-plan *::before,.qd-plan *::after{transition-duration:.01ms!important;scroll-behavior:auto!important}}
