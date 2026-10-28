@@ -200,6 +200,19 @@ def test_video_studio(browser, base_url, failures, page_errors):
             if page.locator("#caption-list li").count() != 1:
                 failures.append("video studio: caption was not added to the list.")
 
+            # Overlapping captions would render on top of one another; reject them.
+            page.locator("#caption-start").fill("0.2")
+            page.locator("#caption-end").fill("0.6")
+            page.locator("#caption-text").fill("ترجمة متداخلة")
+            page.locator("#add-caption").click()
+            if page.locator("#caption-list li").count() != 1:
+                failures.append("video studio: overlapping caption was accepted.")
+            if "يتداخل" not in page.locator("#studio-status").inner_text():
+                failures.append("video studio: overlapping-caption rejection did not explain the timing conflict.")
+
+            # Keep the overlong-text case outside the existing caption interval.
+            page.locator("#caption-start").fill("0.8")
+            page.locator("#caption-end").fill("1")
             page.locator("#caption-text").fill("كلمة" * 120)
             page.locator("#add-caption").click()
             if page.locator("#caption-list li").count() != 1:
