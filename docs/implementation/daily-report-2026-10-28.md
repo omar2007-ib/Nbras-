@@ -51,3 +51,11 @@
 - Commits: `48c51eaddf2054ed3e0201a08d63e3f58692e3f5` (تعديل المعالج)، `d0908947e77717d4d32bb4c3dd769e44d90fdcf4` (الاختبار).
 - GitHub Actions على commit الاختبار: [Athar site quality checks](https://github.com/omar2007-ib/Nbras-/actions/runs/40729623169) — success؛ [Athar static smoke checks](https://github.com/omar2007-ib/Nbras-/actions/runs/40729623266) — success؛ [README integrity](https://github.com/omar2007-ib/Nbras-/actions/runs/40729623126) — success. فحص Vercel للمعاينة أبلغ success، ولا يعني ذلك نشر الإنتاج.
 - لم أدمج التغييرات في `main`، ولم أتحقق يدويًا من Safari/iPad.
+
+## متابعة التنفيذ — حماية مصدر الفيديو أثناء فحص المشاهد (2026-10-28)
+- عالجت حالة سباق محتملة: تغيير ملف الفيديو أثناء تحليل المشاهد قد يبطل رابط الملف المؤقت الذي يقرأ منه الماسح.
+- أصبح اختيار ملف آخر معطّلًا أثناء الفحص، ثم يُعاد تفعيله عند اكتمال الفحص أو فشل إنشاء سياق Canvas.
+- أضفت تأكيدات انحدار ثابتة لحالتي تعطيل الاختيار وإعادة تفعيله.
+- Commits: `f877be3dcf8174b31b809adb2a9911fce9048c8f` (الكود)، `a04d269cdce5e68bd4ad0b899717aa96c50368f7` (الاختبار).
+- لم أعتبر نتائج الاختبارات السابقة إثباتًا لنجاح هذا التعديل الجديد؛ حالة CI للـ commit الأحدث ما زالت قيد التحقق. لم يتم دمج التغيير إلى `main` أو إجراء اختبار Safari/iPad فعلي.
+
