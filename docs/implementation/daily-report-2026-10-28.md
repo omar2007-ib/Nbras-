@@ -43,3 +43,11 @@
 - Commits: `062d54c8809cdf90ef89d62de961ba852f826f1c` (الكود)، ثم `bff607a85d0dba50b4cdf9289a884a9dded2ccef` (الاختبار).
 - فحص commit عبر واجهة GitHub لم يُظهر حالات status أو workflow runs مرتبطة مباشرة به وقت المراجعة؛ لذلك لا أؤكد نجاح CI لهذا التغيير حتى الآن. يجب التحقق من تشغيل الاختبارات قبل الدمج.
 - لم يُجر اختبار يدوي على Safari/iPad ولم يتم النشر إلى `main`.
+
+
+## متابعة التنفيذ — التحقق من نطاق القص (2026-10-28)
+- حسّنت معالج تغيير بداية/مدة المقطع: يُبطل التصدير القديم أولًا، ثم يستدعي `clipBounds()` للتحقق من النطاق الجديد ويعرض خطأ التحقق للمستخدم بدل رسالة نجاح عامة عند إدخال قيم غير صالحة.
+- أضفت تأكيد انحدار يتحقق من إظهار أخطاء النطاق غير الصالح.
+- Commits: `48c51eaddf2054ed3e0201a08d63e3f58692e3f5` (تعديل المعالج)، `d0908947e77717d4d32bb4c3dd769e44d90fdcf4` (الاختبار).
+- GitHub Actions على commit الاختبار: [Athar site quality checks](https://github.com/omar2007-ib/Nbras-/actions/runs/40729623169) — success؛ [Athar static smoke checks](https://github.com/omar2007-ib/Nbras-/actions/runs/40729623266) — success؛ [README integrity](https://github.com/omar2007-ib/Nbras-/actions/runs/40729623126) — success. فحص Vercel للمعاينة أبلغ success، ولا يعني ذلك نشر الإنتاج.
+- لم أدمج التغييرات في `main`، ولم أتحقق يدويًا من Safari/iPad.
