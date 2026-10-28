@@ -312,7 +312,15 @@
         startInput.value = start.toFixed(1);
         durationInput.value = wantedDuration.toFixed(1);
         updateClipLimits();
-        setStatus("تم اختيار نقطة تغيّر بصري. راجع المعاينة وحدّد إن كان المقطع مناسبًا.", "info");
+        // Programmatic range changes do not fire the input change handlers.
+        // Invalidate any previous export so it cannot be downloaded for the old range.
+        resetOutput();
+        try {
+          clipBounds();
+          setStatus("تم اختيار نقطة تغيّر بصري. راجع المعاينة وحدّد إن كان المقطع مناسبًا، ثم أعد التصدير.", "info");
+        } catch (error) {
+          setStatus(error.message, "error");
+        }
       });
       sceneResults.append(button);
     });
