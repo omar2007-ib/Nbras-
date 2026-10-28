@@ -37,6 +37,8 @@ require('href="design-studio.html"' in index_html, "Homepage must link to the de
 require('id="video-file"' in video_html and 'id="export-short"' in video_html, "Video studio must expose the file picker and export action.")
 require("MediaRecorder" in video_js and "captureStream" in video_js, "Video export must use real browser media recording.")
 require("getImageData" in video_js and "meanFrameDifference" in video_js, "Scene suggestions must inspect real video frames.")
+require("fileInput.disabled = true;" in video_js[video_js.index("async function detectSceneChanges()"):video_js.index("function renderSceneSuggestions()")], "Scene scanning must prevent replacing the source file while the scanner is reading its object URL.")
+require("fileInput.disabled = false;" in video_js[video_js.index("async function detectSceneChanges()"):video_js.index("function renderSceneSuggestions()")], "Scene scanning must re-enable file selection after completion or an unsupported canvas context.")
 require("buildSrt" in video_js and "srtTimestamp" in video_js, "Subtitle export must generate timed SRT content.")
 require("drawActiveCaption" in video_js and "drawCover" in video_js, "Export must crop to a vertical frame and render captions.")
 require("if (!layout) { context.restore(); return; }" in video_js, "Caption rendering must restore canvas state when a caption cannot be drawn.")
