@@ -179,6 +179,14 @@
       detectButton.disabled = true;
       addCaptionButton.disabled = true;
       exportButton.disabled = true;
+      // Release the failed source immediately instead of keeping its object URL alive until
+      // another selection or page unload. Only the latest load may clear the active source.
+      revokeUrl(sourceUrl);
+      sourceUrl = null;
+      sourceVideo.pause();
+      sourceVideo.removeAttribute("src");
+      sourceVideo.load();
+      meta.textContent = "";
       setStatus(error.message || "تعذّر فتح الفيديو.", "error");
     }
   });
