@@ -41,6 +41,8 @@ require("buildSrt" in video_js and "srtTimestamp" in video_js, "Subtitle export 
 require("drawActiveCaption" in video_js and "drawCover" in video_js, "Export must crop to a vertical frame and render captions.")
 require("if (!layout) { context.restore(); return; }" in video_js, "Caption rendering must restore canvas state when a caption cannot be drawn.")
 require("MAX_CAPTION_LINES = 4" in video_js and "captionLayout" in video_js and "return lines.slice(0, 3)" not in video_js, "Burned-in captions must fit the visible area instead of silently truncating after three lines.")
+require("const overlapsExisting = captions.some((caption) => start < caption.end && end > caption.start);" in video_js, "The video studio must reject overlapping caption intervals before adding them.");
+require("const overlap = ordered.find((caption, index) => index > 0 && caption.start < ordered[index - 1].end);" in video_js, "Video export validation must reject overlapping captions even if invalid state is introduced.");
 require(not re.search(r"\bfetch\s*\(", video_js), "Local video processing must not upload or fetch user video data.")
 require("XMLHttpRequest" not in video_js and "FormData" not in video_js, "Video studio must not contain upload transport code.")
 require("250 * 1024 * 1024" in video_js, "Video studio must enforce the documented input-size limit.")
