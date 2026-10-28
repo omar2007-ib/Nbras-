@@ -83,8 +83,14 @@
     return String(name || "athar-short").replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9\u0600-\u06FF_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "athar-short";
   }
 
-  function waitForMediaEvent(media, eventName) {
+  function waitForMediaEvent(media, eventName, timeoutMs = 15000) {
     return new Promise((resolve, reject) => {
+      let timeoutId = 0;
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        media.removeEventListener(eventName, onEvent);
+        media.removeEventListener("error", onError);
+      };
       const onEvent = () => {
         cleanup();
         resolve();
@@ -93,10 +99,10 @@
         cleanup();
         reject(new Error("تعذّر قراءة الفيديو في المتصفح."));
       };
-      const cleanup = () => {
-        media.removeEventListener(eventName, onEvent);
-        media.removeEventListener("error", onError);
-      };
+      timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("استغرق المتصفح وقتًا طويلًا في قراءة الفيديو. جرّب ملفًا آخر أو مقطعًا أقصر."));
+      }, timeoutMs);
       media.addEventListener(eventName, onEvent, { once: true });
       media.addEventListener("error", onError, { once: true });
     });
