@@ -30,6 +30,7 @@
   const SAMPLE_WIDTH = 64;
   const SAMPLE_HEIGHT = 36;
   let selectedFile = null;
+  let fileLoadGeneration = 0;
   let sourceUrl = null;
   let outputUrl = null;
   let captions = [];
@@ -129,6 +130,7 @@
   }
 
   fileInput.addEventListener("change", async () => {
+    const loadGeneration = ++fileLoadGeneration;
     if (exporting) return;
     const file = fileInput.files && fileInput.files[0];
     if (!file) return;
@@ -159,6 +161,8 @@
     setStatus("يُقرأ الملف محليًا داخل المتصفح.", "info");
     try {
       await metadataReady;
+      // A newer selection may have replaced this source while metadata was loading.
+      if (loadGeneration !== fileLoadGeneration) return;
       if (!Number.isFinite(sourceVideo.duration) || sourceVideo.duration <= 0) throw new Error("لم يتمكن المتصفح من قراءة مدة هذا الملف.");
       startInput.value = "0";
       durationInput.value = Math.min(30, sourceVideo.duration).toFixed(1);
@@ -169,6 +173,8 @@
       exportButton.disabled = false;
       setStatus("الفيديو جاهز. اختر نقطة البداية وأضف الترجمة قبل التصدير.", "success");
     } catch (error) {
+      // Ignore errors from an older selection; they must not disable or overwrite the newer file.
+      if (loadGeneration !== fileLoadGeneration) return;
       selectedFile = null;
       detectButton.disabled = true;
       addCaptionButton.disabled = true;
