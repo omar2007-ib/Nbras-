@@ -49,6 +49,7 @@ require("250 * 1024 * 1024" in video_js, "Video studio must enforce the document
 require("MAX_CLIP_SECONDS = 180" in video_js, "Video studio must enforce the documented clip-duration limit.")
 require("function handleClipBoundsChange()" in video_js and "resetOutput();" in video_js and 'addEventListener("change", handleClipBoundsChange)' in video_js, "Changing clip bounds must invalidate an existing export so stale video cannot be downloaded.")
 require('setStatus(error.message, "error");' in video_js and "clipBounds();" in video_js[video_js.index("function handleClipBoundsChange()"):video_js.index('startInput.addEventListener("change", handleClipBoundsChange)')], "Changing clip bounds must surface invalid-range errors instead of silently accepting them.")
+require("resetOutput();" in video_js[video_js.index("function renderSceneSuggestions()"):video_js.index('detectButton.addEventListener("click", detectSceneChanges)')], "Choosing a scene suggestion must invalidate a previously exported clip because programmatic input changes do not fire change events.")
 
 require('id="download-svg"' in design_html and 'id="download-png"' in design_html, "Design studio must expose SVG and PNG export controls.")
 require("image/svg+xml" in design_js and "image/png" in design_js, "Design studio must generate real SVG and PNG files.")
