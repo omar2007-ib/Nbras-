@@ -207,6 +207,8 @@
   async function detectSceneChanges() {
     if (!selectedFile || exporting) return;
     detectButton.disabled = true;
+    // Prevent replacing the selected file while the scanner is reading its object URL.
+    fileInput.disabled = true;
     sceneResults.replaceChildren();
     sceneTimes = [];
     sceneProgress.textContent = "يجري تحليل تغيّر الإطارات محليًا؛ لا تغلق الصفحة أثناء الفحص.";
@@ -227,6 +229,7 @@
     const context = sampleCanvas.getContext("2d", { willReadFrequently: true });
     if (!context) {
       detectButton.disabled = false;
+      fileInput.disabled = false;
       sceneProgress.textContent = "";
       setStatus("هذا المتصفح لا يدعم تحليل الإطارات في Canvas.", "error");
       return;
@@ -294,6 +297,7 @@
       scanner.removeAttribute("src");
       scanner.load();
       detectButton.disabled = !selectedFile;
+      fileInput.disabled = false;
     }
   }
 
