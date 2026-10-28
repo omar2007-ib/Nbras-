@@ -19,6 +19,8 @@ jobs:
           python-version: "3.12"
       - name: Validate HTML page metadata and local links
         run: python scripts/check_site.py
+      - name: Test README formatting and relative Markdown links
+        run: python scripts/test_docs_integrity.py
       - name: Run quiz regression checks
         run: python scripts/test_quiz_content.py
       - name: Validate Qudrat study-plan schedules and progress UI
