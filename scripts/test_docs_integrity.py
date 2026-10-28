@@ -72,7 +72,7 @@ class MarkdownIntegrityTests(unittest.TestCase):
         self.assertEqual([], issues, "Broken README links: " + "; ".join(issues))
 
     def test_detects_literal_newline_escape(self):
-        self.assertEqual([1], literal_newline_escape_lines(r"- first\\n- second"))
+        self.assertEqual([1], literal_newline_escape_lines(r"- first\n- second"))
 
     def test_ignores_external_and_fragment_links(self):
         with tempfile.TemporaryDirectory() as temp:
