@@ -31,5 +31,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Check responsive layouts, keyboard focus, and creative studio exports
         run: python scripts/test_responsive_keyboard.py
+      - name: Test core practice and study-plan interactions
+        run: python scripts/test_core_learning_flows.py
       - name: Check MCQ answer-key isolation
         run: python scripts/check_mcq_security.py
