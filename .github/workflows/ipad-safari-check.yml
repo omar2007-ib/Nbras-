@@ -1,0 +1,30 @@
+name: Athar iPad Safari WebKit checks
+
+on:
+  push:
+    branches: [main, "feat/athar-local-creative-studios-20261025", "test/athar-ipad-safari"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ipad-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the static site
+        run: python scripts/build_static.py
+      - name: Install Playwright and WebKit
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps webkit
+      - name: Run iPad-sized WebKit portrait and landscape checks
+        run: python scripts/test_ipad_webkit.py
