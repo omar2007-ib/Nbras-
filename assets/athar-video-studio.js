@@ -342,6 +342,11 @@
       setStatus("توقيت الترجمة يجب أن يبدأ بعد الصفر وينتهي بعد بدايته وداخل مدة المقطع.", "error");
       return;
     }
+    const overlapsExisting = captions.some((caption) => start < caption.end && end > caption.start);
+    if (overlapsExisting) {
+      setStatus("توقيت الترجمة يتداخل مع ترجمة أخرى. عدّل البداية أو النهاية حتى لا تتراكب النصوص على الفيديو.", "error");
+      return;
+    }
     const measureCanvas = document.createElement("canvas");
     const measureContext = measureCanvas.getContext("2d");
     if (!measureContext || !captionLayout(text, measureContext, 620)) {
@@ -359,6 +364,9 @@
   function validateCaptions(duration, requireVisualFit = false) {
     const invalid = captions.find((caption) => caption.start < 0 || caption.end <= caption.start || caption.end > duration + 0.01);
     if (invalid) throw new Error("هناك ترجمة تتجاوز مدة المقطع الحالي. عدّل توقيتها أو راجع مدة المقطع قبل التصدير.");
+    const ordered = [...captions].sort((a, b) => a.start - b.start);
+    const overlap = ordered.find((caption, index) => index > 0 && caption.start < ordered[index - 1].end);
+    if (overlap) throw new Error("توقيت الترجمات يتداخل. عدّل أوقات البداية والنهاية قبل التصدير حتى لا تتراكب النصوص.");
     if (requireVisualFit && captions.length) {
       const measureCanvas = document.createElement("canvas");
       const measureContext = measureCanvas.getContext("2d");
