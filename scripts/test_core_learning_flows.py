@@ -70,7 +70,6 @@ def main():
                 check("1 من 1" in page.locator("[data-task-count]").inner_text(), "completing a task updates progress")
                 page.reload(wait_until="load")
                 check(page.locator("[data-task-list] .task").count() == 1 and page.locator('[data-task-list] input[type=checkbox]').is_checked(), "task and completion state persist after reload")
-                page.once("dialog", lambda dialog: dialog.accept())
                 page.locator("[data-task-list] button").click()
                 check(page.locator("[data-task-list] .task").count() == 0, "individual task can be deleted")
                 task_input = page.locator("[data-task-form] input")
