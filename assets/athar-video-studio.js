@@ -177,8 +177,15 @@
     }
   });
 
-  startInput.addEventListener("change", updateClipLimits);
-  durationInput.addEventListener("change", updateClipLimits);
+  function handleClipBoundsChange() {
+    updateClipLimits();
+    // Any existing export is tied to the previous start/duration; never leave a stale download available.
+    resetOutput();
+    setStatus("تغيّر نطاق المقطع. أعد التصدير للحصول على ملف مطابق للإعدادات الحالية.", "info");
+  }
+
+  startInput.addEventListener("change", handleClipBoundsChange);
+  durationInput.addEventListener("change", handleClipBoundsChange);
 
   function meanFrameDifference(previous, current) {
     let total = 0;
