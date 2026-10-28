@@ -179,9 +179,14 @@
 
   function handleClipBoundsChange() {
     updateClipLimits();
-    // Any existing export is tied to the previous start/duration; never leave a stale download available.
+    // A clip-range change invalidates prior output, even if validation rejects the new range.
     resetOutput();
-    setStatus("تغيّر نطاق المقطع. أعد التصدير للحصول على ملف مطابق للإعدادات الحالية.", "info");
+    try {
+      clipBounds();
+      setStatus("تغيّر نطاق المقطع. أعد التصدير للحصول على ملف مطابق للإعدادات الحالية.", "info");
+    } catch (error) {
+      setStatus(error.message, "error");
+    }
   }
 
   startInput.addEventListener("change", handleClipBoundsChange);
