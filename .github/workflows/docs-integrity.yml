@@ -1,0 +1,29 @@
+name: README integrity
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "scripts/test_docs_integrity.py"
+      - ".github/workflows/docs-integrity.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "scripts/test_docs_integrity.py"
+      - ".github/workflows/docs-integrity.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readme-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test README formatting and relative Markdown links
+        run: python scripts/test_docs_integrity.py

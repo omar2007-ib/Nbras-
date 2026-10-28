@@ -8,8 +8,10 @@
 
 ## موارد التطوير والمهارات
 - [فهرس 25 مستودع GitHub](docs/research/github-resources.md) — قائمة مرجعية لمهارات التصميم والبرمجة والجودة والأمان والتعليم ومصادر LLM.
-- `developer-resources.html` — صفحة داخل أثَر لعرض مستودعات المهارات والبحث فيها. هذه روابط مرجعية وليست تثبيتًا أو دمجًا تلقائيًا للأكواد.\n- `llm-providers.html` — دليل مزوّدي LLM الرسميين؛ يستند إلى `cheahjs/free-llm-api-resources`، وهو دليل مزوّدين وليس API موحدة.
-- صفحة `llm-providers.html` مرتبطة من القائمة الرئيسية، وتعرض مزوّدي الوصول المجاني وأرصدة التجربة مع روابط الوثائق.\n- `supabase/functions/generate-mcq/index.ts` — بوابة LLM قابلة للإعداد عبر `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_PROVIDER` للمزوّدين المتوافقين مع OpenAI Chat Completions.
+- `developer-resources.html` — صفحة داخل أثَر لعرض مستودعات المهارات والبحث فيها. هذه روابط مرجعية وليست تثبيتًا أو دمجًا تلقائيًا للأكواد.
+- `llm-providers.html` — دليل مزوّدي LLM الرسميين؛ يستند إلى `cheahjs/free-llm-api-resources`، وهو دليل مزوّدين وليس API موحدة.
+- صفحة `llm-providers.html` مرتبطة من القائمة الرئيسية، وتعرض مزوّدي الوصول المجاني وأرصدة التجربة مع روابط الوثائق.
+- `supabase/functions/generate-mcq/index.ts` — بوابة LLM قابلة للإعداد عبر `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_PROVIDER` للمزوّدين المتوافقين مع OpenAI Chat Completions.
 
 ## الصفحات
 - `mcq-builder.html` — أداة يدوية لإنشاء أسئلة اختيار من متعدد وتصديرها/استيرادها
@@ -31,6 +33,7 @@
 - `.agents/skills/athar-security/SKILL.md` — إرشادات مراجعة الأمان
 - `docs/implementation/engineering-hardening.md` — تقرير التحسينات وما بقي قبل الإطلاق
 - `scripts/check_site.py` — فحص ساكن للروابط المحلية وRTL والبيانات الوصفية
+- `scripts/test_docs_integrity.py` — اختبارات تنسيق README والروابط المحلية في Markdown.
 - `scripts/test_quiz_content.py` — اختبارات انحدار لمحتوى التدريب وصانع الأسئلة والاختبار المؤقت
 - `scripts/validate_static_site.py` — يبني نسخة النشر ويفحص مراجع الصفحات العامة
 - `.github/workflows/static-smoke.yml` — فحص بناء الموقع على GitHub Actions
