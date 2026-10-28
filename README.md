@@ -33,6 +33,7 @@
 - `.agents/skills/athar-security/SKILL.md` — إرشادات مراجعة الأمان
 - `docs/implementation/engineering-hardening.md` — تقرير التحسينات وما بقي قبل الإطلاق
 - `scripts/check_site.py` — فحص ساكن للروابط المحلية وRTL والبيانات الوصفية
+- `scripts/test_docs_integrity.py` — اختبارات تنسيق README والروابط المحلية في Markdown.
 - `scripts/test_quiz_content.py` — اختبارات انحدار لمحتوى التدريب وصانع الأسئلة والاختبار المؤقت
 - `scripts/validate_static_site.py` — يبني نسخة النشر ويفحص مراجع الصفحات العامة
 - `.github/workflows/static-smoke.yml` — فحص بناء الموقع على GitHub Actions
