@@ -16,6 +16,8 @@
   const captionEnd = $("caption-end");
   const captionText = $("caption-text");
   const captionLanguage = $("caption-language");
+  const captionFileInput = $("caption-file");
+  const importCaptionsButton = $("import-captions");
   const addCaptionButton = $("add-caption");
   const captionList = $("caption-list");
   const exportButton = $("export-short");
@@ -25,6 +27,8 @@
   const exportMeta = $("export-meta");
 
   const MAX_FILE_BYTES = 250 * 1024 * 1024;
+  const MAX_IMPORTED_SUBTITLE_BYTES = 5 * 1024 * 1024;
+  const MAX_IMPORTED_CAPTIONS = 500;
   const MAX_CLIP_SECONDS = 180;
   const MAX_CAPTION_LINES = 4;
   const SAMPLE_WIDTH = 64;
@@ -73,6 +77,8 @@
     captionEnd.disabled = busy;
     captionText.disabled = busy;
     captionLanguage.disabled = busy;
+    captionFileInput.disabled = busy || !selectedFile;
+    importCaptionsButton.disabled = busy || !selectedFile;
   }
 
   function revokeUrl(url) {
@@ -160,6 +166,7 @@
     sourceVideo.src = sourceUrl;
     sourceVideo.hidden = false;
     captions = [];
+    captionFileInput.value = "";
     sceneTimes = [];
     sceneResults.replaceChildren();
     renderCaptions();
@@ -176,6 +183,8 @@
       meta.textContent = file.name + " — " + (file.size / (1024 * 1024)).toFixed(1) + " MB — المدة " + formatTime(sourceVideo.duration);
       detectButton.disabled = false;
       addCaptionButton.disabled = false;
+      captionFileInput.disabled = false;
+      importCaptionsButton.disabled = false;
       exportButton.disabled = false;
       setStatus("الفيديو جاهز. اختر نقطة البداية وأضف الترجمة قبل التصدير.", "success");
     } catch (error) {
@@ -184,6 +193,8 @@
       selectedFile = null;
       detectButton.disabled = true;
       addCaptionButton.disabled = true;
+      captionFileInput.disabled = true;
+      importCaptionsButton.disabled = true;
       exportButton.disabled = true;
       // Release the failed source immediately instead of keeping its object URL alive until
       // another selection or page unload. Only the latest load may clear the active source.
@@ -374,6 +385,70 @@
     downloadSrt.hidden = captions.length === 0;
   }
 
+
+  importCaptionsButton.addEventListener("click", async () => {
+    if (!selectedFile || exporting) return;
+    const subtitleFile = captionFileInput.files && captionFileInput.files[0];
+    if (!subtitleFile) {
+      setStatus("اختر ملف SRT أو VTT أولًا.", "error");
+      return;
+    }
+    if (subtitleFile.size > MAX_IMPORTED_SUBTITLE_BYTES) {
+      setStatus("ملف الترجمة أكبر من 5 ميجابايت. اختر ملفًا أصغر.", "error");
+      return;
+    }
+    const extension = subtitleFile.name.toLowerCase().split(".").pop();
+    if (extension !== "srt" && extension !== "vtt") {
+      setStatus("صيغة الترجمة غير مدعومة. استخدم ملف SRT أو VTT.", "error");
+      return;
+    }
+
+    setBusy(true);
+    setStatus("يجري قراءة ملف الترجمة وربط توقيته بالمقطع المحدد محليًا.", "info");
+    try {
+      const parser = window.AtharSubtitleParser;
+      if (!parser || typeof parser.parse !== "function" || typeof parser.clipToRange !== "function") {
+        throw new Error("أداة قراءة ملفات الترجمة غير متاحة. أعد تحميل الصفحة وحاول مرة أخرى.");
+      }
+      const content = await subtitleFile.text();
+      const parsed = parser.parse(content, extension);
+      const bounds = clipBounds();
+      const mapped = parser.clipToRange(parsed, bounds.start, bounds.end);
+      if (!mapped.length) {
+        throw new Error("لا يحتوي ملف الترجمة على نصوص تقع داخل المقطع المحدد.");
+      }
+      if (mapped.length > MAX_IMPORTED_CAPTIONS) {
+        throw new Error("يحتوي المقطع على أكثر من 500 ترجمة. قصّر نطاق الفيديو أو قسّم ملف الترجمة.");
+      }
+
+      const imported = mapped.map((caption) => ({
+        start: caption.start,
+        end: caption.end,
+        text: caption.text,
+        language: captionLanguage.value
+      }));
+      const ordered = [...imported].sort((a, b) => a.start - b.start);
+      const overlap = ordered.find((caption, index) => index > 0 && caption.start < ordered[index - 1].end);
+      if (overlap) {
+        throw new Error("ملف الترجمة يحتوي على توقيتات متداخلة داخل هذا المقطع. أصلح التوقيتات ثم أعد الاستيراد.");
+      }
+      const measureCanvas = document.createElement("canvas");
+      const measureContext = measureCanvas.getContext("2d");
+      if (!measureContext || ordered.some((caption) => !captionLayout(caption.text, measureContext, 620))) {
+        throw new Error("هناك ترجمة طويلة لا تتسع في الإطار العمودي. قصّر النص أو قسّمه في ملف الترجمة؛ لم يتم استبدال الترجمات الحالية.");
+      }
+
+      captions = ordered;
+      renderCaptions();
+      resetOutput();
+      setStatus("تم استيراد " + captions.length + " ترجمة من " + subtitleFile.name + " وتعديل توقيتها للمقطع المحدد. راجعها قبل التصدير.", "success");
+    } catch (error) {
+      setStatus(error.message || "تعذّر استيراد ملف الترجمة.", "error");
+    } finally {
+      setBusy(false);
+    }
+  });
+
   addCaptionButton.addEventListener("click", () => {
     if (!selectedFile) return;
     const start = Number(captionStart.value);
@@ -480,7 +555,7 @@
   function captionLayout(text, context, maxWidth) {
     const fontSizes = [42, 38, 34, 30, 26];
     for (const fontSize of fontSizes) {
-      context.font = '700 ' + fontSize + 'px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
+      context.font = '700 ' + fontSize + 'px "Jazeel", sans-serif';
       const lines = wrapCanvasText(text, context, maxWidth);
       if (lines.length <= MAX_CAPTION_LINES && lines.every((line) => context.measureText(line).width <= maxWidth)) {
         return { lines, fontSize };
@@ -515,7 +590,7 @@
     context.direction = active.language === "en" ? "ltr" : "rtl";
     const layout = captionLayout(active.text, context, canvas.width - 100);
     if (!layout) { context.restore(); return; }
-    context.font = '700 ' + layout.fontSize + 'px "Jazeel", "IBM Plex Sans Arabic", sans-serif';
+    context.font = '700 ' + layout.fontSize + 'px "Jazeel", sans-serif';
     const lines = layout.lines;
     const lineHeight = Math.round(layout.fontSize * 1.25);
     const boxHeight = lines.length * lineHeight + 30;
