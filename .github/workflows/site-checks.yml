@@ -20,7 +20,9 @@ jobs:
       - name: Validate HTML page metadata and local links
         run: python scripts/check_site.py
       - name: Check creative studio JavaScript syntax
-        run: node --check assets/athar-video-studio.js && node --check assets/athar-design-studio.js
+        run: node --check assets/athar-video-studio.js && node --check assets/athar-design-studio.js && node --check assets/athar-subtitle-parser.js
+      - name: Test SRT/VTT parser and clip timing
+        run: node scripts/test_subtitle_parser.js
       - name: Test local creative studio regressions
         run: python scripts/test_creative_studios.py
       - name: Run quiz regression checks
