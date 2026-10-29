@@ -27,4 +27,4 @@ assert.throws(() => parse("not a subtitle file", "srt"), /لم يتم العثو
 assert.throws(() => parseTimestamp("99:99:99.999"), /خارج النطاق/);
 assert.throws(() => clipToRange(srtCues, 4, 2), /غير صالح/);
 
-console.log("Subtitle parser tests: 11 assertions passed.");
+console.log("Subtitle parser tests: 13 assertions passed.");
