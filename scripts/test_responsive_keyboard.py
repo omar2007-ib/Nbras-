@@ -191,6 +191,32 @@ def test_video_studio(browser, base_url, failures, page_errors):
                     + "; metadata=" + page.locator("#video-meta").inner_text()
                 )
                 return
+            # Import a real SRT fixture and verify global timings are shifted to the selected clip.
+            subtitle_path = Path(folder) / "imported.srt"
+            subtitle_path.write_text(
+                "1\\n00:00:00,200 --> 00:00:01,200\\nترجمة مستوردة\\n",
+                encoding="utf-8",
+            )
+            page.locator("#clip-start").fill("0.5")
+            page.locator("#clip-start").press("Tab")
+            page.locator("#clip-duration").fill("1")
+            page.locator("#clip-duration").press("Tab")
+            page.locator("#caption-file").set_input_files(str(subtitle_path))
+            page.locator("#import-captions").click()
+            try:
+                page.wait_for_function(
+                    "() => document.querySelector('#caption-list')?.textContent.includes('ترجمة مستوردة')",
+                    timeout=5000,
+                )
+            except Exception as exc:
+                failures.append("video studio: SRT import failed: " + str(exc) + "; status=" + page.locator("#studio-status").inner_text())
+                return
+            imported_caption = page.locator("#caption-list").inner_text()
+            if "00:00.0–00:00.7" not in imported_caption or "تم استيراد 1 ترجمة" not in page.locator("#studio-status").inner_text():
+                failures.append("video studio: imported SRT timing was not shifted to the selected clip.")
+            page.locator("#caption-list .caption-remove").click()
+            page.locator("#clip-start").fill("0")
+            page.locator("#clip-start").press("Tab")
             page.locator("#clip-duration").fill("1")
             page.locator("#clip-duration").press("Tab")
             page.locator("#caption-start").fill("0")
