@@ -63,7 +63,7 @@
   function textBlock(lines, x, y, fontSize, lineHeight, color, anchor, direction, fontWeight) {
     if (!lines.length) return "";
     const tspans = lines.map((line, index) => '<tspan x="' + x + '" dy="' + (index === 0 ? 0 : lineHeight) + '">' + escapeXml(line) + "</tspan>").join("");
-    return '<text x="' + x + '" y="' + y + '" fill="' + color + '" font-size="' + fontSize + '" font-weight="' + fontWeight + '" text-anchor="' + anchor + '" direction="' + direction + '" unicode-bidi="plaintext" font-family="Jazeel, Cairo, sans-serif">' + tspans + "</text>";
+    return '<text x="' + x + '" y="' + y + '" fill="' + color + '" font-size="' + fontSize + '" font-weight="' + fontWeight + '" text-anchor="' + anchor + '" direction="' + direction + '" unicode-bidi="plaintext" font-family="Jazeel, sans-serif">' + tspans + "</text>";
   }
 
   function buildSvg() {
@@ -110,7 +110,7 @@
     }
 
     const labelSvg = label
-      ? '<text x="' + x + '" y="' + Math.round(size.height * 0.11) + '" fill="' + (template === "statement" ? colors.accent : colors.primary) + '" font-size="30" font-weight="700" text-anchor="' + anchor + '" direction="' + direction + '" unicode-bidi="plaintext" font-family="Jazeel, Cairo, sans-serif">' + escapeXml(label) + "</text>"
+      ? '<text x="' + x + '" y="' + Math.round(size.height * 0.11) + '" fill="' + (template === "statement" ? colors.accent : colors.primary) + '" font-size="30" font-weight="700" text-anchor="' + anchor + '" direction="' + direction + '" unicode-bidi="plaintext" font-family="Jazeel, sans-serif">' + escapeXml(label) + "</text>"
       : "";
     const titleSvg = textBlock(titleLines, x, titleY, titleSize, titleLineHeight, titleColor, anchor, direction, 700);
     const bodySvg = textBlock(bodyLines, x, bodyY, bodySize, bodyLineHeight, bodyColor, anchor, direction, 400);
@@ -121,9 +121,9 @@
       const ctaTextX = direction === "rtl" ? size.width - 88 - ctaWidth / 2 : 88 + ctaWidth / 2;
       const ctaFill = template === "statement" ? colors.accent : colors.primary;
       const ctaText = template === "statement" ? colors.primary : "#FFFFFF";
-      ctaSvg = '<rect x="' + ctaX + '" y="' + (ctaY - 48) + '" width="' + ctaWidth + '" height="72" rx="20" fill="' + ctaFill + '"/><text x="' + ctaTextX + '" y="' + ctaY + '" fill="' + ctaText + '" font-size="30" font-weight="700" text-anchor="middle" direction="' + direction + '" unicode-bidi="plaintext" font-family="Jazeel, Cairo, sans-serif">' + escapeXml(cta) + "</text>";
+      ctaSvg = '<rect x="' + ctaX + '" y="' + (ctaY - 48) + '" width="' + ctaWidth + '" height="72" rx="20" fill="' + ctaFill + '"/><text x="' + ctaTextX + '" y="' + ctaY + '" fill="' + ctaText + '" font-size="30" font-weight="700" text-anchor="middle" direction="' + direction + '" unicode-bidi="plaintext" font-family="Jazeel, sans-serif">' + escapeXml(cta) + "</text>";
     }
-    const wordmark = '<text x="' + x + '" y="' + (size.height - 62) + '" fill="' + (template === "statement" ? colors.accent : colors.primary) + '" font-size="44" font-weight="700" text-anchor="' + anchor + '" direction="rtl" unicode-bidi="plaintext" font-family="Jazeel, Cairo, sans-serif">أثَر</text>';
+    const wordmark = '<text x="' + x + '" y="' + (size.height - 62) + '" fill="' + (template === "statement" ? colors.accent : colors.primary) + '" font-size="44" font-weight="700" text-anchor="' + anchor + '" direction="rtl" unicode-bidi="plaintext" font-family="Jazeel, sans-serif">أثَر</text>';
     const svgTitle = escapeXml(title);
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size.width + '" height="' + size.height + '" viewBox="0 0 ' + size.width + " " + size.height + '" role="img" aria-labelledby="art-title"><title id="art-title">' + svgTitle + '</title>' + background + shapes + labelSvg + titleSvg + bodySvg + ctaSvg + wordmark + "</svg>";
   }
