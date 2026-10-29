@@ -194,7 +194,7 @@ def test_video_studio(browser, base_url, failures, page_errors):
             # Import a real SRT fixture and verify global timings are shifted to the selected clip.
             subtitle_path = Path(folder) / "imported.srt"
             subtitle_path.write_text(
-                "1\\n00:00:00,200 --> 00:00:01,200\\nترجمة مستوردة\\n",
+                "1\n00:00:00,200 --> 00:00:01,200\nترجمة مستوردة\n",
                 encoding="utf-8",
             )
             page.locator("#clip-start").fill("0.5")
