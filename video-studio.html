@@ -27,7 +27,7 @@
   <section class="studio-intro">
     <span class="studio-eyebrow">أدوات إنتاج محلية</span>
     <h1>حوّل الفيديو الطويل إلى مقطع عمودي</h1>
-    <p>اختر مقطعًا من جهازك، اكتشف نقاط تغيّر المشاهد، اضبط القص، أضف ترجمتك النصية، ثم صدّر فيديو عموديًا مع الترجمة مدمجة.</p>
+    <p>اختر فيديو من جهازك، اكتشف نقاط تغيّر المشاهد، اضبط القص، استورد ملف SRT/VTT أو أضف الترجمة يدويًا، ثم صدّر فيديو عموديًا مع الترجمة مدمجة.</p>
     <div id="studio-status" class="studio-status" role="status" aria-live="polite">اختر فيديو للبدء. لا يُرفع الملف إلى خادم.</div>
     <p class="studio-note">هذه النسخة تستخدم كشف تغيّر الصورة وليس فهمًا دلاليًا أو ذكاءً اصطناعيًا. الترجمة النصية تُدخل يدويًا؛ لم يتم توصيل تحويل الكلام إلى نص أو الترجمة الآلية بعد.</p>
   </section>
@@ -65,7 +65,13 @@
     <section class="studio-card" aria-labelledby="captions-heading">
       <div class="studio-step">03</div>
       <h2 id="captions-heading">الترجمة النصية</h2>
-      <p class="studio-help">أدخل النص المترجم يدويًا وحدد توقيته بالنسبة إلى بداية المقطع المختار. سيظهر النص على الفيديو ويمكن تنزيل ملف SRT منفصل.</p>
+      <p class="studio-help">استورد ملف ترجمة SRT أو VTT موجودًا، أو أدخل النص يدويًا. عند الاستيراد تُحوّل التوقيتات إلى نطاق المقطع المحدد وتُراجع قبل التصدير.</p>
+      <div class="subtitle-import">
+        <label for="caption-file">ملف ترجمة SRT أو VTT</label>
+        <input id="caption-file" type="file" accept=".srt,.vtt,text/vtt,application/x-subrip" disabled>
+        <button id="import-captions" class="studio-button studio-button--secondary" type="button" disabled>استيراد الترجمة للمقطع المحدد</button>
+        <p class="studio-help">سيحل الملف المستورد محل الترجمات الحالية بعد نجاح التحقق. لا يُرفع ملف الفيديو أو الترجمة إلى خادم.</p>
+      </div>
       <div class="studio-fields">
         <div>
           <label for="caption-start">من (ثانية)</label>
@@ -105,12 +111,13 @@
     <ul>
       <li>المعالجة والتصدير محليان داخل المتصفح؛ لا يوجد رفع للفيديو ولا تخزين سحابي في هذه الأداة.</li>
       <li>كشف المشاهد يعتمد على اختلاف الإطارات، وقد يفوّت لحظات الكلام المهمة أو يقترح مشاهد غير مناسبة.</li>
-      <li>إضافة الترجمة وتوقيتها يدوية. لا توجد خدمة متصلة للتفريغ الصوتي أو الترجمة التلقائية.</li>
+      <li>يمكن استيراد ترجمة SRT/VTT أو إدخالها يدويًا. التفريغ الصوتي والترجمة الآلية من الصوت غير متصلين بعد.</li>
       <li>يحتاج التصدير إلى متصفح يدعم MediaRecorder والتقاط الفيديو والصوت. إذا لم يدعمها الجهاز، ستظهر رسالة واضحة بدل إنشاء ملف غير صالح.</li>
     </ul>
   </section>
 </main>
 <footer class="athar-studio-footer"><span>أثَر</span> — أدوات تعليمية وإبداعية تحترم خصوصية ملفاتك.</footer>
+<script defer src="assets/athar-subtitle-parser.js"></script>
 <script defer src="assets/athar-video-studio.js"></script>
 </body>
 </html>
