@@ -9,6 +9,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
 
 from playwright.sync_api import sync_playwright
+from test_responsive_keyboard import test_video_studio
 
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
@@ -127,6 +128,15 @@ def main():
                             failures.append(f"{route} ({profile}): {exc}")
                         finally:
                             context.close()
+                # Exercise real local video export in WebKit, not only page layout.
+                test_video_studio(
+                    browser,
+                    base_url,
+                    failures,
+                    page_errors,
+                    viewport={"width": 810, "height": 1080},
+                    has_touch=True,
+                )
                 failures.extend("JavaScript page error: " + error for error in page_errors)
             finally:
                 browser.close()
