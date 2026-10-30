@@ -111,8 +111,9 @@ def create_test_video(page, folder):
       canvas.height = 180;
       const context = canvas.getContext('2d');
       const stream = canvas.captureStream(15);
-      const mimeType = ['video/webm;codecs=vp8', 'video/webm'].find((type) => MediaRecorder.isTypeSupported(type));
-      if (!mimeType) throw new Error('No WebM MediaRecorder type is supported.');
+      const mimeType = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'].find((type) => MediaRecorder.isTypeSupported(type));
+      if (!mimeType) throw new Error('No supported MediaRecorder type is available.');
+      const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
       const recorder = new MediaRecorder(stream, { mimeType });
       const chunks = [];
       const stopped = new Promise((resolve, reject) => {
@@ -142,12 +143,14 @@ def create_test_video(page, folder):
       for (let offset = 0; offset < bytes.length; offset += 0x8000) {
         binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
       }
-      return { mimeType, base64: btoa(binary) };
+      return { mimeType, extension, base64: btoa(binary) };
     }""")
-    raw_path = Path(folder) / "athar-smoke-raw.webm"
+    raw_path = Path(folder) / ("athar-smoke-raw." + fixture["extension"])
     raw_path.write_bytes(base64.b64decode(fixture["base64"]))
     if raw_path.stat().st_size < 1000:
         raise RuntimeError("Synthetic browser-test video was empty.")
+    if fixture["extension"] == "mp4":
+        return raw_path
 
     candidates = sorted(Path.home().glob(".cache/ms-playwright/ffmpeg-*/ffmpeg-linux"))
     ffmpeg = str(candidates[-1]) if candidates else shutil.which("ffmpeg")
@@ -165,11 +168,25 @@ def create_test_video(page, folder):
                 return remux_path
     return raw_path
 
-def test_video_studio(browser, base_url, failures, page_errors):
+def test_video_studio(browser, base_url, failures, page_errors, viewport=None, has_touch=False):
     import tempfile
 
-    context = browser.new_context(viewport={"width": 1280, "height": 900}, accept_downloads=True)
+    context = browser.new_context(
+        viewport=viewport or {"width": 1280, "height": 900},
+        accept_downloads=True,
+        has_touch=has_touch,
+    )
     page = context.new_page()
+    # Exercise the Web Audio fallback used by Safari, where HTMLMediaElement.captureStream
+    # is not consistently available even though MediaRecorder and canvas capture are.
+    page.add_init_script("""() => {
+      Object.defineProperty(HTMLMediaElement.prototype, "captureStream", {
+        configurable: true, value: undefined
+      });
+      Object.defineProperty(HTMLMediaElement.prototype, "mozCaptureStream", {
+        configurable: true, value: undefined
+      });
+    }""")
     page.on("pageerror", lambda error: page_errors.append(f"video-studio.html interaction: {error}"))
     try:
         response = page.goto(base_url + "/video-studio.html", wait_until="load", timeout=20000)
