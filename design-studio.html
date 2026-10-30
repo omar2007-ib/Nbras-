@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#5B21B6">
+  <meta name="description" content="استوديو أثَر لإنشاء تصاميم اجتماعية متجهية وتصدير SVG وPNG باستخدام لوحة الهوية المعتمدة.">
+  <link rel="icon" type="image/svg+xml" href="assets/athar-mark.svg">
+  <title>استوديو التصميم | أثَر</title>
+  <link rel="stylesheet" href="assets/athar-identity.css">
+  <link rel="stylesheet" href="assets/athar-design-system.css">
+  <link rel="stylesheet" href="assets/athar-premium.css">
+  <link rel="stylesheet" href="assets/athar-design-studio.css">
+</head>
+<body>
+<header class="athar-studio-header">
+  <a class="logo" href="index.html" aria-label="أثَر — الصفحة الرئيسية"><span>أثَر</span></a>
+  <nav aria-label="القائمة الرئيسية">
+    <a href="index.html">الرئيسية</a>
+    <a href="courses.html">الدورات</a>
+    <a href="video-studio.html">استوديو المقاطع</a>
+    <a href="design-studio.html" aria-current="page">استوديو التصميم</a>
+  </nav>
+</header>
+<main class="design-shell">
+  <section class="design-intro">
+    <span class="design-eyebrow">تصميم محلي قابل للتصدير</span>
+    <h1>أنشئ تصميمًا بصريًا بهوية أثَر</h1>
+    <p>كوّن منشورًا اجتماعيًا أو بطاقة إعلان، ثم صدّره كملف SVG متجهي أو PNG عالي الدقة. القوالب حقيقية وقابلة للتنزيل، لكنها ليست توليد صور بالذكاء الاصطناعي.</p>
+    <p class="design-notice">لوحة الهوية المستخدمة: <strong>#5B21B6</strong> و<strong>#C4B5FD</strong>. اسم «أثَر» نصّ فقط دون رمز منفصل. ملف خط جزيل المرخّص غير موجود في المستودع؛ سيستخدم المتصفح الخط إذا كان مثبتًا محليًا، وإلا فسيظهر خط بديل إلى حين إضافة ملف مرخّص.</p>
+  </section>
+
+  <div class="design-grid">
+    <form id="design-form" class="design-card">
+      <h2>محتوى التصميم</h2>
+      <label for="design-title">العنوان</label>
+      <textarea id="design-title" rows="3" maxlength="180" required placeholder="اكتب عنوان التصميم"></textarea>
+      <label for="design-body">النص المساند (اختياري)</label>
+      <textarea id="design-body" rows="4" maxlength="500" placeholder="أضف تفاصيل مختصرة أو رسالة التصميم"></textarea>
+      <label for="design-label">وسم صغير (اختياري)</label>
+      <input id="design-label" type="text" maxlength="70" placeholder="مثال: إعلان جديد">
+      <label for="design-cta">دعوة لاتخاذ إجراء (اختياري)</label>
+      <input id="design-cta" type="text" maxlength="70" placeholder="مثال: اعرف المزيد">
+      <div class="design-fields">
+        <div>
+          <label for="design-size">مقاس التصميم</label>
+          <select id="design-size">
+            <option value="square">مربع — 1080 × 1080</option>
+            <option value="portrait">عمودي — 1080 × 1350</option>
+            <option value="story">قصة — 1080 × 1920</option>
+          </select>
+        </div>
+        <div>
+          <label for="design-template">القالب</label>
+          <select id="design-template">
+            <option value="minimal">هادئ</option>
+            <option value="statement">عنوان بارز</option>
+            <option value="editorial">تحريري</option>
+          </select>
+        </div>
+      </div>
+      <label for="design-language">اتجاه النص</label>
+      <select id="design-language">
+        <option value="ar">العربية — RTL</option>
+        <option value="en">English — LTR</option>
+      </select>
+      <button class="design-button" type="submit">إنشاء المعاينة</button>
+      <p class="design-help">لا يتم إرسال النص إلى أي خادم. تُنشأ ملفات SVG وPNG داخل المتصفح فقط.</p>
+    </form>
+
+    <section class="design-card" aria-labelledby="preview-heading">
+      <h2 id="preview-heading">المعاينة والتصدير</h2>
+      <p id="design-status" class="design-status" role="status" aria-live="polite">أدخل عنوانًا ثم اضغط «إنشاء المعاينة».</p>
+      <div id="design-preview" class="design-preview">
+        <p>ستظهر معاينة التصميم هنا بعد إنشائها.</p>
+      </div>
+      <div class="design-actions">
+        <button id="download-svg" class="design-button" type="button" disabled>تنزيل SVG</button>
+        <button id="download-png" class="design-button design-button--secondary" type="button" disabled>تنزيل PNG</button>
+        <button id="download-tokens" class="design-button design-button--secondary" type="button">تنزيل لوحة الهوية JSON</button>
+      </div>
+      <p class="design-help">الملف المتجهي قابل للتكبير دون فقدان الجودة. نتيجة PNG تعتمد على الخطوط المتاحة على جهازك؛ راجع ملف جزيل المرخّص قبل اعتماد الهوية النهائية.</p>
+    </section>
+  </div>
+</main>
+<footer class="design-footer"><span>أثَر</span> — تصميم واضح، وهوية ثابتة.</footer>
+<script defer src="assets/athar-design-studio.js"></script>
+</body>
+</html>

@@ -21,5 +21,19 @@ jobs:
           python-version: "3.12"
       - name: Build and validate public pages
         run: python scripts/validate_static_site.py
+      - name: Test SRT/VTT parser and clip timing
+        run: node scripts/test_subtitle_parser.js
+      - name: Check creative studio JavaScript syntax
+        run: node --check assets/athar-video-studio.js && node --check assets/athar-design-studio.js
+      - name: Test local creative studio regressions
+        run: python scripts/test_creative_studios.py
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Check responsive layouts, keyboard focus, and creative studio exports
+        run: python scripts/test_responsive_keyboard.py
+      - name: Test core practice and study-plan interactions
+        run: python scripts/test_core_learning_flows.py
       - name: Check MCQ answer-key isolation
         run: python scripts/check_mcq_security.py

@@ -85,3 +85,40 @@ th{background:#EAF4F2;color:#12304A}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 }
+
+
+/* Approved Athar identity lock: purple palette and a text-only wordmark.
+   The licensed Jazeel font file is not bundled in this repository; do not substitute an unlicensed copy. */
+:root{
+  --athar-navy:#5B21B6;--athar-teal:#5B21B6;--athar-amber:#C4B5FD;
+  --athar-offwhite:#FCFAFF;--athar-pale:#F3EEFF;--athar-slate:#2D2340;--athar-white:#FFFFFF;
+  --navy:#5B21B6;--navy2:#F3EEFF;--gold:#C4B5FD;--cream:#FCFAFF;--ink:#2D2340;
+  --muted:#5B5470;--sage:#F3EEFF;--teal:#5B21B6;--teal-dark:#4C1D95;
+}
+body{background:#FCFAFF!important;color:#2D2340!important}
+h1,h2,h3,h4,h5,h6,.logo,.section-head h2{color:#5B21B6!important}
+header a,.logo,nav a{color:#5B21B6!important}
+nav a:hover,header a:hover,nav a.active{color:#4C1D95!important}
+.logo,header .logo span{font-family:"Jazeel",sans-serif!important;font-weight:700!important;letter-spacing:0!important}
+header .logo img,header .logo::before,.logo::before{display:none!important;content:none!important;background:none!important;box-shadow:none!important}
+.hero{background:radial-gradient(ellipse at 12% 18%,rgba(196,181,253,.28),transparent 42%),linear-gradient(135deg,#FFFFFF 0%,#FCFAFF 58%,#F3EEFF 100%)!important;color:#2D2340!important}
+.hero:before,.hero:after{border-color:rgba(196,181,253,.5)!important;box-shadow:0 0 0 28px rgba(196,181,253,.08),0 0 0 58px rgba(91,33,182,.035)!important}
+.hero h1 span,.slogan,footer strong{color:#5B21B6!important}
+.hero p,.card p,.feature p,.section-head p,.faq details p{color:#5B5470!important}
+.badge,.pill{background:#F3EEFF!important;border:1px solid #C4B5FD!important;color:#5B21B6!important}
+.btn,button.btn,input[type=submit],button[type=submit],.button-primary{background:#5B21B6!important;color:#FFFFFF!important;border-color:#5B21B6!important}
+.btn:hover,button.btn:hover,input[type=submit]:hover,.button-primary:hover{background:#4C1D95!important;border-color:#4C1D95!important}
+.btn.secondary,.btn.alt,.button-secondary{background:#FFFFFF!important;color:#5B21B6!important;border-color:#C4B5FD!important}
+.card,.feature,.faq details,article,.panel,.course-card,.resource-card,.stat-card,.dashboard-card,.auth-card,.form-card{border-color:#E9DFFF!important}
+.num,.icon-badge,.badge-number{background:#F3EEFF!important;color:#5B21B6!important}
+.features,.highlight,.soft-panel,.callout{background:#F3EEFF!important}
+a{color:#5B21B6}
+footer{background:#5B21B6!important;color:#FFFFFF!important}
+footer strong{color:#C4B5FD!important}
+input,select,textarea{border-color:#D9CFF0!important}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(91,33,182,.25)!important;border-color:#5B21B6!important}
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #5B21B6!important;outline-offset:3px}
+.athar-notification__toggle:hover,.athar-notification__toggle[aria-expanded=true]{background:#F3EEFF!important;color:#5B21B6!important}
+.athar-notification__mark,.athar-notification__read{color:#5B21B6!important}
+.athar-notification__count{background:#C4B5FD!important;color:#2D2340!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
