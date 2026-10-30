@@ -5,10 +5,18 @@
 
 ## الوضع الحالي
 
-- استوديو المقاطع يستخدم `MediaRecorder` و`HTMLCanvasElement.captureStream()` لمعالجة الملف محليًا، ويقدّم قصًا يدويًا، واقتراحات تغيّر الإطارات، وترجمة يدوية مدمجة، وتصدير SRT وفيديو عمودي.
+- استوديو المقاطع يستخدم `MediaRecorder` و`HTMLCanvasElement.captureStream()` لمعالجة الملف محليًا، ويقدّم قصًا يدويًا، واقتراحات تغيّر الإطارات، وترجمة يدوية/مستوردة SRT/VTT، وتصدير SRT وفيديو عمودي. عند غياب `HTMLMediaElement.captureStream()` يستخدم مسار Web Audio لالتقاط الصوت.
 - استوديو التصميم ينشئ SVG/PNG فعليًا من قوالب المستخدم ويصدّر رموز الألوان JSON. هذا ليس توليد صور بالذكاء الاصطناعي.
 - فحص مستودع التطوير لم يجد ملفات خطوط `woff/woff2/ttf/otf`، لذلك لا يمكن تأكيد ظهور خط جزيل الحقيقي على أجهزة الزوار. الاسم موجود في CSS فقط.
 - لا توجد خدمة تفريغ صوتي/ترجمة تلقائية أو محرك توليد صور متصل حاليًا.
+
+## توافق Safari/iPad والتقاط الصوت — تحديث 2026-10-30
+
+- توثيق MDN الحالي يصنّف `HTMLMediaElement.captureStream()` على أنه محدود التوافر وليس Baseline؛ جدول التوافق لا يوفّره في Safari وSafari على iOS. لذلك لا يجوز جعل هذه الواجهة شرطًا وحيدًا لتصدير الفيديو على iPad.
+- أُضيف مسار احتياطي في استوديو أثَر: التقاط صوت عنصر الفيديو عبر `AudioContext.createMediaElementSource()` و`MediaStreamAudioDestinationNode`، مع استمرار التقاط الصورة من `canvas.captureStream()`. يبدأ تفعيل AudioContext قبل انتظار seek لتفادي فقدان تفعيل المستخدم المؤقت في Safari.
+- يرفض الاستوديو التصدير إذا تعذّر تجهيز مسار صوت بدل إنتاج ملف صامت عن غير قصد. اختبارات Chromium وWebKit ستغطي مسار Web Audio، لكن محاكاة WebKit لا تعادل اختبار iPad فعليًا.
+- مرجع التوافق: https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream
+- مرجع التسجيل: https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder
 
 ## المكتبات المرشحة
 
