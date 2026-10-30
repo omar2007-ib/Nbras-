@@ -37,6 +37,8 @@ require('href="video-studio.html"' in index_html, "Homepage must link to the vid
 require('href="design-studio.html"' in index_html, "Homepage must link to the design studio.")
 require('id="video-file"' in video_html and 'id="export-short"' in video_html, "Video studio must expose the file picker and export action.")
 require("MediaRecorder" in video_js and "captureStream" in video_js, "Video export must use real browser media recording.")
+require("async function captureSourceAudio()" in video_js and "createMediaStreamDestination" in video_js and "fallbackAudioSource.connect(fallbackAudioContext.destination)" in video_js, "Video export must preserve audio on browsers without HTMLMediaElement.captureStream.")
+require("لم يتم إنشاء ملف ناقص الصوت" in video_js and "لم يتمكن المتصفح من تجهيز مسار صوت" in video_js, "Video export must fail clearly rather than silently dropping audio.")
 require("getImageData" in video_js and "meanFrameDifference" in video_js, "Scene suggestions must inspect real video frames.")
 require('id="caption-file"' in video_html and 'id="import-captions"' in video_html, "Video studio must expose SRT/VTT import controls.")
 require("AtharSubtitleParser" in video_js and "clipToRange" in video_js, "Imported subtitle timings must be mapped to the selected clip.")
