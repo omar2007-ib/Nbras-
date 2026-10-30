@@ -41,6 +41,8 @@
   let sceneTimes = [];
   let exporting = false;
   let scanFrameId = 0;
+  let fallbackAudioContext = null;
+  let fallbackAudioSource = null;
 
   function setStatus(message, state) {
     status.textContent = message;
@@ -602,6 +604,48 @@
     context.restore();
   }
 
+  async function captureSourceAudio() {
+    const captureMethod = typeof sourceVideo.captureStream === "function"
+      ? sourceVideo.captureStream
+      : typeof sourceVideo.mozCaptureStream === "function"
+        ? sourceVideo.mozCaptureStream
+        : null;
+
+    if (captureMethod) {
+      try {
+        const stream = captureMethod.call(sourceVideo);
+        if (stream.getAudioTracks().length) return { stream, cleanup: null };
+        stream.getTracks().forEach((track) => track.stop());
+      } catch {
+        // Fall through to Web Audio for engines that expose but cannot use captureStream().
+      }
+    }
+
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (typeof AudioContextConstructor !== "function") {
+      throw new Error("لا يدعم هذا المتصفح التقاط صوت الفيديو مباشرة أو عبر Web Audio؛ لم يتم إنشاء ملف ناقص الصوت.");
+    }
+
+    if (!fallbackAudioContext || fallbackAudioContext.state === "closed") {
+      fallbackAudioContext = new AudioContextConstructor();
+      fallbackAudioSource = fallbackAudioContext.createMediaElementSource(sourceVideo);
+      // Keep normal preview audio audible after the media element is routed through Web Audio.
+      fallbackAudioSource.connect(fallbackAudioContext.destination);
+    }
+
+    const destination = fallbackAudioContext.createMediaStreamDestination();
+    fallbackAudioSource.connect(destination);
+    await fallbackAudioContext.resume();
+
+    return {
+      stream: destination.stream,
+      cleanup: () => {
+        try { fallbackAudioSource.disconnect(destination); } catch {}
+        destination.stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }
+
   function supportedRecorderType() {
     if (typeof MediaRecorder === "undefined" || typeof MediaRecorder.isTypeSupported !== "function") return "";
     const candidates = [
@@ -624,8 +668,12 @@
       setStatus(error.message, "error");
       return;
     }
-    if (typeof MediaRecorder === "undefined" || typeof HTMLCanvasElement === "undefined" || typeof HTMLCanvasElement.prototype.captureStream !== "function" || (typeof sourceVideo.captureStream !== "function" && typeof sourceVideo.mozCaptureStream !== "function")) {
-      setStatus("متصفحك لا يدعم التقاط الفيديو والصوت المطلوب للتصدير. استخدم متصفحًا حديثًا يدعم MediaRecorder وcaptureStream.", "error");
+    const hasCanvasCapture = typeof HTMLCanvasElement !== "undefined" && typeof HTMLCanvasElement.prototype.captureStream === "function";
+    const hasAudioCapture = typeof sourceVideo.captureStream === "function"
+      || typeof sourceVideo.mozCaptureStream === "function"
+      || typeof (window.AudioContext || window.webkitAudioContext) === "function";
+    if (typeof MediaRecorder === "undefined" || !hasCanvasCapture || !hasAudioCapture) {
+      setStatus("متصفحك لا يوفّر أدوات تسجيل الفيديو العمودي أو التقاط الصوت اللازمة للتصدير. لم يتم إنشاء ملف ناقص.", "error");
       return;
     }
     const mimeType = supportedRecorderType();
@@ -648,6 +696,7 @@
       return;
     }
     let sourceStream;
+    let audioCaptureCleanup = null;
     let outputStream;
     let recorder;
     let animationId = 0;
@@ -661,9 +710,13 @@
         sourceVideo.currentTime = bounds.start;
         await seeked;
       }
-      sourceStream = typeof sourceVideo.captureStream === "function" ? sourceVideo.captureStream() : sourceVideo.mozCaptureStream();
+      const audioCapture = await captureSourceAudio();
+      sourceStream = audioCapture.stream;
+      audioCaptureCleanup = audioCapture.cleanup;
       outputStream = canvas.captureStream(30);
-      sourceStream.getAudioTracks().forEach((track) => outputStream.addTrack(track.clone()));
+      const audioTracks = sourceStream.getAudioTracks();
+      if (!audioTracks.length) throw new Error("لم يتمكن المتصفح من تجهيز مسار صوت للمقطع؛ أوقفنا التصدير بدل إنشاء فيديو صامت.");
+      audioTracks.forEach((track) => outputStream.addTrack(track.clone()));
       recorder = new MediaRecorder(outputStream, { mimeType, videoBitsPerSecond: 5000000, audioBitsPerSecond: 128000 });
       const stopped = new Promise((resolve, reject) => {
         recorder.addEventListener("stop", resolve, { once: true });
@@ -720,6 +773,7 @@
     } finally {
       window.clearTimeout(stopTimer);
       cancelAnimationFrame(animationId);
+      if (audioCaptureCleanup) audioCaptureCleanup();
       if (sourceStream) sourceStream.getTracks().forEach((track) => track.stop());
       if (outputStream) outputStream.getTracks().forEach((track) => track.stop());
       sourceVideo.pause();
@@ -738,5 +792,8 @@
     cancelAnimationFrame(scanFrameId);
     revokeUrl(sourceUrl);
     revokeUrl(outputUrl);
+    if (fallbackAudioContext && fallbackAudioContext.state !== "closed") {
+      fallbackAudioContext.close().catch(() => {});
+    }
   });
 })();
