@@ -704,15 +704,17 @@
     let timedOut = false;
     const chunks = [];
     try {
+      // Initialize/resume Web Audio before any media seek await can consume the
+      // browser's transient user activation (required by Safari's audio policy).
+      const audioCapture = await captureSourceAudio();
+      sourceStream = audioCapture.stream;
+      audioCaptureCleanup = audioCapture.cleanup;
       sourceVideo.pause();
       if (Math.abs(sourceVideo.currentTime - bounds.start) > 0.05) {
         const seeked = waitForMediaEvent(sourceVideo, "seeked");
         sourceVideo.currentTime = bounds.start;
         await seeked;
       }
-      const audioCapture = await captureSourceAudio();
-      sourceStream = audioCapture.stream;
-      audioCaptureCleanup = audioCapture.cleanup;
       outputStream = canvas.captureStream(30);
       const audioTracks = sourceStream.getAudioTracks();
       if (!audioTracks.length) throw new Error("لم يتمكن المتصفح من تجهيز مسار صوت للمقطع؛ أوقفنا التصدير بدل إنشاء فيديو صامت.");
