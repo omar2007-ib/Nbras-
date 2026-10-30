@@ -10,30 +10,27 @@ Arabic-first RTL learning platform for Saudi Qudrat preparation. Priorities: cla
 - Avoid spa-specific copy, booking patterns, neon, dark-mode-first visuals, harsh animation, and emoji used as decorative icons.
 
 ## Color tokens
-- Primary soft pink: `#E8B4B8` — selected brand surfaces and subtle emphasis.
-- Secondary sage: `#A8D5BA` — learning progress, supportive panels, positive states.
-- CTA gold: `#D4AF37` — primary action background with dark charcoal text.
-- Warm background: `#FFF5F5`.
-- Text: `#2D3436`.
-- Secondary text: `#555F61`.
-- White surface: `#FFFFFF`.
-- Borders: `#EADFE0`.
-- Deep gold text for badges/links: `#6E5508`.
-- Success: `#1D7655`; error: `#A73535`.
-- Do not use white text on gold or low-contrast pink. Verify contrast before introducing new colors.
+- Primary brand purple: `#5B21B6` — wordmark, primary actions, and key emphasis.
+- Accent lavender: `#C4B5FD` — secondary emphasis, selected surfaces, and supporting highlights.
+- Soft surface: `#F3EEFF`; page background: `#FCFAFF`.
+- Main text: `#2D2340`; secondary text: `#5B5470`.
+- White surface: `#FFFFFF`; borders: `#E9DFFF`.
+- Success: `#047857`; error: `#991B1B`.
+- Keep normal text contrast at or above 4.5:1. Do not use lavender as small text on white; use the primary purple for readable text.
 
 ## Typography
-- Arabic body: IBM Plex Sans Arabic (fallback Tahoma, Arial, sans-serif).
-- Base size at least 16px; body line-height around 1.7–1.85.
-- Headings use clear scale and tight hierarchy; avoid long lines on desktop.
-- English technical labels such as MCQ may use the same sans-serif family.
+- Brand wordmark and branded display text: the actual licensed Jazeel webfont. Do not substitute another display font or claim Jazeel is available when its licensed webfont asset is absent.
+- Arabic body and interface copy: IBM Plex Sans Arabic; this is a body font, not a replacement for the Jazeel wordmark.
+- Base body size at least 16px; line-height around 1.7–1.85.
+- Headings use a clear scale and tight hierarchy; avoid long lines on desktop.
+- English technical labels such as MCQ may use the body sans-serif family.
 
 ## Layout and components
 - RTL is mandatory: `<html lang="ar" dir="rtl">`.
 - Content width: approximately 1100–1180px; mobile gutters 4–5%.
 - Use 8px spacing rhythm and consistent radii: 10px fields/buttons, 14–20px cards.
 - Cards use white surfaces, subtle borders, low-opacity soft shadows.
-- Hero sections use warm white/pink surfaces and organic low-contrast accents, not dark gradients.
+- Hero sections use white and very light lavender surfaces with restrained purple accents, not dark gradients.
 - Navigation: light header, charcoal links, visible hover and active state.
 - Forms: persistent visible labels, inline status messages, clear required fields, keyboard-friendly order.
 - Buttons and touch controls: minimum 44px height; clickable cursor; visible hover/focus/disabled states.
