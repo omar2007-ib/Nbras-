@@ -6,6 +6,8 @@ from urllib.parse import urlsplit
 import subprocess
 import sys
 
+from check_public_artifacts import scan_public_tree
+
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 
@@ -41,7 +43,7 @@ def main():
         return build.returncode
 
     pages = sorted(DIST.glob("*.html"))
-    errors = []
+    errors = [f"Public artifact guard: {issue}" for issue in scan_public_tree(DIST)]
     if not pages:
         errors.append("No HTML pages were generated in dist/.")
     if not (DIST / "admin.html").exists():
