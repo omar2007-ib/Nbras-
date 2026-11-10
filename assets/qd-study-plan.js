@@ -225,7 +225,7 @@
       const file = fileInput.files && fileInput.files[0];
       if (!file) return;
       try {
-        if (!/\\.json$/i.test(file.name)) {
+        if (!/\.json$/i.test(file.name)) {
           throw new TypeError("اختر ملف نسخة احتياطية بامتداد JSON.");
         }
         if (file.size === 0 || file.size > backup.MAX_BACKUP_BYTES) {
