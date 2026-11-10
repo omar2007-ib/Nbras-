@@ -30,6 +30,12 @@
     </div>
   </div>
   <p id="qd-plan-status" class="qd-plan__status" role="status" aria-live="polite">حدّد اليوم بعد إكمال تدريبه لحفظ تقدّمك.</p>
+  <div class="qd-plan__backup-actions" aria-label="النسخ الاحتياطي لتقدّم الخطة">
+    <button id="qd-plan-export" class="qd-plan__backup-button" type="button">تنزيل نسخة احتياطية</button>
+    <button id="qd-plan-import" class="qd-plan__backup-button qd-plan__backup-button--secondary" type="button">استعادة نسخة احتياطية</button>
+    <input id="qd-plan-import-file" type="file" accept=".json,application/json" aria-label="ملف نسخة احتياطية JSON" hidden>
+  </div>
+  <p class="qd-plan__backup-note">يمكنك نقل تقدّمك بين الأجهزة باستخدام ملف JSON. النسخة محلية ولا تُرفع إلى خادم.</p>
   <div id="qd-plan-days" class="qd-plan__grid" aria-label="جدول خطة الثلاثين يومًا"></div>
 
   <details class="qd-plan__sprint">
@@ -43,7 +49,7 @@
   </details>
 </section>
 <div class="grid"><div class="card"><h2>أضف مهمة للمذاكرة</h2><form class="form-row" data-task-form><input class="input" required maxlength="120" placeholder="مثال: مراجعة النسب والتناسب"><button class="btn" type="submit">إضافة</button></form><p class="muted">أمثلة: مشاهدة درس، حل ١٠ أسئلة، مراجعة الأخطاء.</p></div><div class="card"><h2>تقدّمك</h2><p><strong data-task-count>٠ من ٠ مهام مكتملة</strong></p><div class="progress"><span id="progress"></span></div><p class="muted">ضع علامة على المهمة عند إتمامها.</p></div></div><div class="card" style="margin-top:18px"><h2>مهامك</h2><div data-task-list></div><button class="btn" data-clear-tasks type="button" style="margin-top:16px">مسح جميع المهام</button></div><div class="callout" style="margin-top:18px">اقتراح: خصّص وقتًا قصيرًا ثابتًا كل يوم، وراجع الأسئلة التي أخطأت فيها قبل الانتقال إلى موضوع جديد.</div></main><footer><strong>أثَر</strong><br>كل خطوة تعلّم تقرّبك من هدفك.</footer><script src="assets/app.js"></script><script>const observer=new MutationObserver(()=>{const t=document.querySelectorAll('[data-task-list] .task');const d=document.querySelectorAll('[data-task-list] .task.done');document.getElementById('progress').style.width=(t.length?d.length/t.length*100:0)+'%'});observer.observe(document.querySelector('[data-task-list]'),{childList:true,subtree:true,attributes:true});</script>
-  <script src="assets/qd-study-plan.js"></script>
+  <script src="assets/qd-study-plan-backup.js"></script>\n  <script src="assets/qd-study-plan.js"></script>
   <script defer src="assets/athar-notifications.js"></script>
 <script defer src="/productos-badge.js"></script>
 </body></html>

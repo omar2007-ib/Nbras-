@@ -34,3 +34,11 @@
 .qd-plan button{touch-action:manipulation}
 @media(max-width:700px){.qd-plan__overview{grid-template-columns:1fr}.qd-plan__grid{grid-template-columns:1fr}.qd-plan__header{align-items:stretch}.qd-plan__reset{align-self:flex-start}}
 @media(prefers-reduced-motion:reduce){.qd-plan *, .qd-plan *::before,.qd-plan *::after{transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.qd-plan__backup-actions{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 4px}
+.qd-plan__backup-button{min-height:44px;padding:10px 16px;border:1px solid #6E5508;border-radius:11px;background:#D4AF37;color:#2D3436;font:inherit;font-weight:800;cursor:pointer}
+.qd-plan__backup-button--secondary{border-color:#A8D5BA;background:#F5FBF7;color:#244B38}
+.qd-plan__backup-button:hover{filter:brightness(.97)}
+.qd-plan__backup-button:focus-visible{outline:3px solid #2F7656;outline-offset:3px}
+.qd-plan__backup-note{margin:0 0 16px;color:#555F61;font-size:.9rem}
+@media(max-width:560px){.qd-plan__backup-button{flex:1 1 100%}}

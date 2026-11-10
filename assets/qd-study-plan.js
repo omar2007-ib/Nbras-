@@ -189,4 +189,74 @@
       }
     });
   });
-})(); 
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const backup = window.AtharStudyPlanBackup;
+    const exportButton = document.getElementById("qd-plan-export");
+    const importButton = document.getElementById("qd-plan-import");
+    const fileInput = document.getElementById("qd-plan-import-file");
+    const status = document.getElementById("qd-plan-status");
+    if (!backup || !exportButton || !importButton || !fileInput) return;
+
+    exportButton.addEventListener("click", () => {
+      try {
+        const payload = backup.createBackup(state);
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json;charset=utf-8"
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "athar-study-plan-" + new Date().toISOString().slice(0, 10) + ".json";
+        link.hidden = true;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        if (status) status.textContent = "تم تنزيل نسخة احتياطية من تقدّم الخطتين. احتفظ بالملف لاستعادته لاحقًا.";
+      } catch (_) {
+        if (status) status.textContent = "تعذّر إنشاء النسخة الاحتياطية أو تنزيلها.";
+      }
+    });
+
+    importButton.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      try {
+        if (!/\.json$/i.test(file.name)) {
+          throw new TypeError("اختر ملف نسخة احتياطية بامتداد JSON.");
+        }
+        if (file.size === 0 || file.size > backup.MAX_BACKUP_BYTES) {
+          throw new RangeError("حجم ملف النسخة الاحتياطية غير صالح؛ الحد الأقصى 16 كيلوبايت.");
+        }
+        if (file.type && !["application/json", "text/json"].includes(file.type)) {
+          throw new TypeError("نوع الملف لا يبدو ملف JSON.");
+        }
+
+        const payload = backup.parseBackup(await file.text());
+        const accepted = window.confirm(
+          "ستُستبدل بيانات التقدّم الحالية في هذا المتصفح ببيانات النسخة الاحتياطية. لن يتم رفع الملف إلى خادم. هل تريد المتابعة؟"
+        );
+        if (!accepted) return;
+
+        const previous = state;
+        state = payload.progress;
+        if (!saveState()) {
+          state = previous;
+          render();
+          throw new Error("تعذّر حفظ النسخة المستعادة في تخزين المتصفح.");
+        }
+        render();
+        if (status) status.textContent = "تمت استعادة التقدّم بنجاح على هذا الجهاز.";
+      } catch (error) {
+        if (status) status.textContent = error && typeof error.message === "string"
+          ? error.message
+          : "تعذّرت استعادة النسخة الاحتياطية.";
+      } finally {
+        fileInput.value = "";
+      }
+    });
+  });
+})();

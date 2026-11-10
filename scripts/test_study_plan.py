@@ -95,6 +95,20 @@ require("role=\"progressbar\"" in html and 'aria-live="polite"' in html,
         "Progress and status need accessible semantics.")
 require("textContent = item.topic" in js and "textContent = item.task" in js,
         "Schedule text must be inserted with textContent, not interpreted as HTML.")
+require('src="assets/qd-study-plan-backup.js"' in html,
+        "The study page must load the isolated backup schema validator.")
+for element_id in ("qd-plan-export", "qd-plan-import", "qd-plan-import-file"):
+    require(f'id="{element_id}"' in html, f"The study page is missing #{element_id}.")
+require('aria-label="ملف نسخة احتياطية JSON"' in html,
+        "The backup file input must have an accessible name.")
+require("athar-study-plan-progress" in read(ROOT / "assets" / "qd-study-plan-backup.js"),
+        "The backup must use its own explicit schema identifier.")
+require("MAX_BACKUP_BYTES = 16 * 1024" in read(ROOT / "assets" / "qd-study-plan-backup.js"),
+        "Backup imports must enforce the 16 KiB file limit.")
+require("ستُستبدل بيانات التقدّم الحالية" in read(ROOT / "assets" / "qd-study-plan.js"),
+        "Restore must explain that existing local progress will be replaced.")
+require("لا تُرفع إلى خادم" in html,
+        "The interface must disclose that backups remain local and are not uploaded.")
 require("@media(prefers-reduced-motion:reduce)" in css,
         "The plan UI must respect reduced-motion preferences.")
 require("min-height:44px" in css,
